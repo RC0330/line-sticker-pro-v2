@@ -59,6 +59,9 @@ let longPressTargetIndex = -1;
 let longPressStartScreen = null;
 let longPressTriggered = false;
 
+let draggingGridGuide = null;
+let gridGuideMoved = false;
+
 const LONG_PRESS_MS = 360;
 const DRAG_START_THRESHOLD = 22;
 
@@ -119,6 +122,197 @@ function drawHandle(h) {
   }
 
   ctx.restore();
+}
+
+function createEmptyGridTemplate() {
+  return { active: false, columns: 0, rows: 0, verticalLines: [], horizontalLines: [] };
+}
+
+function deactivateGridTemplate(clearLines = true) {
+  editorStore.gridTemplate = clearLines
+    ? createEmptyGridTemplate()
+    : { ...(editorStore.gridTemplate || createEmptyGridTemplate()), active: false };
+}
+
+function createGridBoxesFromTemplate(template) {
+  if (!editorStore.image?.width || !editorStore.image?.height) return [];
+  const imageW = editorStore.image.width;
+  const imageH = editorStore.image.height;
+  const vertical = [...(template.verticalLines || [])].sort((a, b) => a - b);
+  const horizontal = [...(template.horizontalLines || [])].sort((a, b) => a - b);
+  const xEdges = [0, ...vertical, imageW];
+  const yEdges = [0, ...horizontal, imageH];
+  const boxes = [];
+  for (let r = 0; r < yEdges.length - 1; r += 1) {
+    for (let c = 0; c < xEdges.length - 1; c += 1) {
+      boxes.push({
+        x: xEdges[c],
+        y: yEdges[r],
+        width: xEdges[c + 1] - xEdges[c],
+        height: yEdges[r + 1] - yEdges[r],
+        rotation: 0,
+        visible: true,
+        locked: false,
+        opacity: 1,
+        name: `Crop ${boxes.length + 1}`
+      });
+    }
+  }
+  return boxes;
+}
+
+function commitBoxes(boxes, statusText = "", { keepGridTemplate = false } = {}) {
+  editorStore.boxes = boxes.map((box, index) => ({
+    rotation: 0,
+    visible: true,
+    locked: false,
+    opacity: 1,
+    name: box.name || `Crop ${index + 1}`,
+    ...box
+  }));
+  editorStore.selected = editorStore.boxes.length ? [0] : [];
+  editorStore.activeBox = editorStore.boxes.length ? 0 : -1;
+  editorStore.transformStatus = statusText;
+  if (!keepGridTemplate) deactivateGridTemplate(true);
+}
+
+function syncBoxesFromGridTemplate(statusText = "已更新切割線") {
+  if (!editorStore.gridTemplate?.active) return;
+  const boxes = createGridBoxesFromTemplate(editorStore.gridTemplate);
+  commitBoxes(boxes, statusText, { keepGridTemplate: true });
+}
+
+export function replaceBoxes(boxes, statusText = "", { keepGridTemplate = false } = {}) {
+  if (editorStore.historyIndex < 0) saveHistory();
+  commitBoxes(boxes, statusText, { keepGridTemplate });
+  saveHistory();
+  renderLayers();
+  draw();
+}
+
+export function setEditableGridTemplate(columns, rows, statusText = "") {
+  if (!editorStore.image?.width || !editorStore.image?.height) return [];
+  const imageW = editorStore.image.width;
+  const imageH = editorStore.image.height;
+  const safeColumns = Math.max(1, Math.round(columns));
+  const safeRows = Math.max(1, Math.round(rows));
+
+  const verticalLines = [];
+  const horizontalLines = [];
+  for (let c = 1; c < safeColumns; c += 1) verticalLines.push((imageW * c) / safeColumns);
+  for (let r = 1; r < safeRows; r += 1) horizontalLines.push((imageH * r) / safeRows);
+
+  editorStore.gridTemplate = {
+    active: true,
+    columns: safeColumns,
+    rows: safeRows,
+    verticalLines,
+    horizontalLines
+  };
+
+  if (editorStore.historyIndex < 0) saveHistory();
+  syncBoxesFromGridTemplate(statusText || `已建立 ${safeColumns}×${safeRows} 可拖曳切割線模板`);
+  saveHistory();
+  renderLayers();
+  draw();
+  return editorStore.boxes;
+}
+
+function drawGridTemplateGuides() {
+  const template = editorStore.gridTemplate;
+  if (!template?.active || !editorStore.image) return;
+
+  const zoom = editorStore.zoom || 1;
+  const top = 0;
+  const left = 0;
+  const right = editorStore.image.width;
+  const bottom = editorStore.image.height;
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(34,211,238,0.95)";
+  ctx.fillStyle = "rgba(34,211,238,0.95)";
+  ctx.lineWidth = 2.5 / zoom;
+  ctx.setLineDash([10 / zoom, 8 / zoom]);
+
+  (template.verticalLines || []).forEach((x, index) => {
+    ctx.beginPath();
+    ctx.moveTo(x, top);
+    ctx.lineTo(x, bottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(x, top + 18 / zoom, 7 / zoom, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = `${11 / zoom}px Arial`;
+    ctx.fillText(`V${index + 1}`, x + 8 / zoom, top + 22 / zoom);
+    ctx.setLineDash([10 / zoom, 8 / zoom]);
+  });
+
+  (template.horizontalLines || []).forEach((y, index) => {
+    ctx.beginPath();
+    ctx.moveTo(left, y);
+    ctx.lineTo(right, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(left + 18 / zoom, y, 7 / zoom, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = `${11 / zoom}px Arial`;
+    ctx.fillText(`H${index + 1}`, left + 28 / zoom, y - 8 / zoom);
+    ctx.setLineDash([10 / zoom, 8 / zoom]);
+  });
+
+  ctx.restore();
+}
+
+function hitGridTemplateGuide(pos) {
+  const template = editorStore.gridTemplate;
+  if (!template?.active || !editorStore.image) return null;
+  const threshold = 16 / (editorStore.zoom || 1);
+
+  for (let i = 0; i < (template.verticalLines || []).length; i += 1) {
+    const x = template.verticalLines[i];
+    if (Math.abs(pos.x - x) <= threshold && pos.y >= 0 && pos.y <= editorStore.image.height) {
+      return { axis: "vertical", index: i };
+    }
+  }
+  for (let i = 0; i < (template.horizontalLines || []).length; i += 1) {
+    const y = template.horizontalLines[i];
+    if (Math.abs(pos.y - y) <= threshold && pos.x >= 0 && pos.x <= editorStore.image.width) {
+      return { axis: "horizontal", index: i };
+    }
+  }
+  return null;
+}
+
+function startGridGuideDrag(hit) {
+  draggingGridGuide = hit;
+  gridGuideMoved = false;
+  clearLongPressState(false);
+  editorStore.deleteButtonBox = -1;
+  editorStore.selected = [];
+  editorStore.activeBox = -1;
+  editorStore.transformStatus = hit.axis === "vertical" ? "拖曳縱向切割線中" : "拖曳橫向切割線中";
+  canvas.classList.add("dragging");
+}
+
+function updateGridGuideDrag(pos) {
+  if (!draggingGridGuide || !editorStore.gridTemplate?.active || !editorStore.image) return;
+  const template = editorStore.gridTemplate;
+  const padding = 18 / (editorStore.zoom || 1);
+  if (draggingGridGuide.axis === "vertical") {
+    const lines = template.verticalLines;
+    const prev = draggingGridGuide.index === 0 ? 0 : lines[draggingGridGuide.index - 1];
+    const next = draggingGridGuide.index === lines.length - 1 ? editorStore.image.width : lines[draggingGridGuide.index + 1];
+    lines[draggingGridGuide.index] = clamp(pos.x, prev + padding, next - padding);
+  } else {
+    const lines = template.horizontalLines;
+    const prev = draggingGridGuide.index === 0 ? 0 : lines[draggingGridGuide.index - 1];
+    const next = draggingGridGuide.index === lines.length - 1 ? editorStore.image.height : lines[draggingGridGuide.index + 1];
+    lines[draggingGridGuide.index] = clamp(pos.y, prev + padding, next - padding);
+  }
+  gridGuideMoved = true;
+  syncBoxesFromGridTemplate(draggingGridGuide.axis === "vertical" ? "已拖曳縱向切割線" : "已拖曳橫向切割線");
 }
 
 function getDeleteButtonRect(box) {
@@ -280,6 +474,8 @@ export function draw() {
     drawImageBackdrop();
     ctx.drawImage(editorStore.image, 0, 0);
   }
+
+  drawGridTemplateGuides();
 
   editorStore.boxes.forEach((box, index) => {
     if (box.visible === false) return;
@@ -489,6 +685,7 @@ export function deleteBoxAt(index) {
 
   editorStore.deleteButtonBox = -1;
   editorStore.deleteButtonHighlightUntil = 0;
+  deactivateGridTemplate(true);
   editorStore.transformStatus = "已刪除裁切框";
   resetCanvasInteraction(true);
   saveHistory();
@@ -509,6 +706,7 @@ export function deleteSelectedBoxes() {
   editorStore.activeBox = -1;
   editorStore.deleteButtonBox = -1;
   editorStore.deleteButtonHighlightUntil = 0;
+  deactivateGridTemplate(true);
   editorStore.transformStatus = "已刪除選取裁切框";
   resetCanvasInteraction(true);
   saveHistory();
@@ -527,6 +725,8 @@ function pointInRect(pos, rect) {
 }
 
 function isPointOnEditableTarget(pos) {
+  if (hitGridTemplateGuide(pos)) return true;
+
   if (editorStore.selected.length > 1) {
     const bounds = getBounds(getSelectedBoxes());
     if (bounds) {
@@ -609,6 +809,7 @@ export function fitImageToView(redraw = true) {
 export function setImageAndFit(img) {
   editorStore.image = img;
   editorStore.viewInitialized = false;
+  editorStore.gridTemplate = createEmptyGridTemplate();
   fitImageToView();
 }
 
@@ -669,6 +870,8 @@ export function resetCanvasInteraction(keepSelection = true) {
   groupResizeStartBounds = null;
   groupResizeStartBoxes = [];
   groupRotateCenter = null;
+  draggingGridGuide = null;
+  gridGuideMoved = false;
 }
 
 function angleFromCenter(pos, center) {
@@ -692,6 +895,7 @@ function snapshotSelected() {
 
 function startGroupResize(pos, handleName) {
   editorStore.deleteButtonBox = -1;
+  deactivateGridTemplate(true);
   groupResizing = true;
   editorStore.resizeHandle = handleName;
   groupResizeStartBounds = getBounds(getSelectedBoxes());
@@ -704,6 +908,7 @@ function startGroupResize(pos, handleName) {
 
 function startSingleResize(pos, index, handleName) {
   editorStore.deleteButtonBox = -1;
+  deactivateGridTemplate(true);
   const box = editorStore.boxes[index];
   editorStore.activeBox = index;
   editorStore.resizeHandle = handleName;
@@ -722,6 +927,7 @@ function startSingleResize(pos, index, handleName) {
 
 function startRotate(pos, index = null) {
   editorStore.deleteButtonBox = -1;
+  deactivateGridTemplate(true);
   rotating = true;
 
   if (index !== null) {
@@ -830,6 +1036,14 @@ function onPointerDown(e) {
 
   editorStore.activeBox = -1;
 
+  const gridGuideHit = hitGridTemplateGuide(pos);
+  if (gridGuideHit) {
+    startGridGuideDrag(gridGuideHit);
+    renderLayers();
+    draw();
+    return;
+  }
+
   if (editorStore.selected.length > 1) {
     const bounds = getBounds(getSelectedBoxes());
 
@@ -920,6 +1134,12 @@ function onPointerMove(e) {
   }
 
   const pos = getPos(e);
+
+  if (draggingGridGuide) {
+    updateGridGuideDrag(pos);
+    draw();
+    return;
+  }
 
   if (longPressPointerId === e.pointerId && longPressTargetIndex >= 0 && longPressStartScreen) {
     const currentScreen = getCanvasPoint(e);
@@ -1248,9 +1468,11 @@ function onPointerUp(e) {
     });
   }
 
-  if (editorStore.dragging || resizing || groupResizing || rotating) saveHistory();
+  if (editorStore.dragging || resizing || groupResizing || rotating || gridGuideMoved) saveHistory();
 
   editorStore.dragging = false;
+  draggingGridGuide = null;
+  gridGuideMoved = false;
   panningView = false;
   panStartPoint = null;
   resizing = false;
@@ -1272,6 +1494,7 @@ function onPointerUp(e) {
 
 
 export function createCropBoxCentered() {
+  deactivateGridTemplate(true);
   resetCanvasInteraction(true);
   setPanMode(false);
 

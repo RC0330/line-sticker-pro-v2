@@ -12,7 +12,13 @@ export function saveHistory() {
     cloneState({
 
       boxes:
-        editorStore.boxes
+        editorStore.boxes,
+      gridTemplate:
+        editorStore.gridTemplate,
+      selected:
+        editorStore.selected,
+      activeBox:
+        editorStore.activeBox
     });
 
   editorStore.history.splice(
@@ -78,5 +84,12 @@ function restore(
       snapshot.boxes
     );
 
-  editorStore.selected = [];
+  editorStore.gridTemplate =
+
+    cloneState(
+      snapshot.gridTemplate || { active: false, columns: 0, rows: 0, verticalLines: [], horizontalLines: [] }
+    );
+
+  editorStore.selected = cloneState(snapshot.selected || []);
+  editorStore.activeBox = snapshot.activeBox ?? -1;
 }
