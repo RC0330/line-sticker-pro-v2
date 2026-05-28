@@ -69,5 +69,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v32-grid-cell-select-delete-fix"
+  appVersion: "v33-mouse-drag-fix"
 };
