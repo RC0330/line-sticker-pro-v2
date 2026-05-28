@@ -61,5 +61,5 @@ export const editorStore = {
   bgTolerance: 34,
   bgFeather: 8,
 
-  appVersion: "v27-auto-detect-crops"
+  appVersion: "v28-grid-cutter-lines"
 };
