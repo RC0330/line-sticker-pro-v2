@@ -1,7 +1,7 @@
 {
   "name": "line-sticker-pro-pwa-github-v18-mobile-multiselect-pinch",
   "private": true,
-  "version": "25.0.0",
+  "version": "26.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
