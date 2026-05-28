@@ -69,5 +69,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v30-grid-single-cell-edit"
+  appVersion: "v31-grid-cell-hit-first"
 };
