@@ -61,5 +61,13 @@ export const editorStore = {
   bgTolerance: 34,
   bgFeather: 8,
 
-  appVersion: "v28-grid-cutter-lines"
+  gridTemplate: {
+    active: false,
+    columns: 0,
+    rows: 0,
+    verticalLines: [],
+    horizontalLines: []
+  },
+
+  appVersion: "v29-draggable-grid-template"
 };
