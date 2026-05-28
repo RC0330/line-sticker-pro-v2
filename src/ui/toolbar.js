@@ -37,7 +37,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v27 已載入｜自動預測裁切框</div>
+    <div class="version-badge">v28 已載入｜平均切格＋切割線設定</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -56,7 +56,28 @@ export function initToolbar() {
 
     <button id="addBoxBtn">新增裁切框</button>
     <button id="autoDetectBtn" class="secondary-button" type="button">自動預測裁切框</button>
-    <div class="tool-note auto-detect-note">上傳圖片後會先自動預測裁切框；你可再調整大小、移動或刪除誤判裁切框。</div>
+    <div class="tool-note auto-detect-note">上傳圖片後會先自動預測裁切框；若預測不準，可直接使用下方 4×4 / 5×8 平均切格，或自行設定縱向／橫向切割線數量。</div>
+
+    <div class="tool-section grid-section">
+      <div class="tool-title">平均切格 / 切割線設定</div>
+      <div class="tool-note">可快速建立平均裁切框。縱向切割線 3 條 = 4 欄；橫向切割線 3 條 = 4 列。</div>
+      <div class="grid-preset-buttons">
+        <button id="grid4x4Btn" type="button">4×4 平均切格</button>
+        <button id="grid5x8Btn" type="button">5×8 平均切格</button>
+      </div>
+      <div class="grid-inputs">
+        <label class="grid-input-field">
+          <span>縱向切割線</span>
+          <input id="verticalLinesInput" type="number" min="0" max="20" value="3" inputmode="numeric" />
+        </label>
+        <label class="grid-input-field">
+          <span>橫向切割線</span>
+          <input id="horizontalLinesInput" type="number" min="0" max="30" value="3" inputmode="numeric" />
+        </label>
+      </div>
+      <div id="gridResultNote" class="tool-note"></div>
+      <button id="generateGridBtn" class="secondary-button" type="button">依切割線產生平均裁切框</button>
+    </div>
 
     <div class="tool-section nudge-section">
       <div class="tool-title">裁切框微調</div>
@@ -123,6 +144,96 @@ export function initToolbar() {
 
   const uploadInput = document.getElementById("uploadInput");
 
+  function clampNumber(value, min, max) {
+    return Math.max(min, Math.min(max, Number.isFinite(value) ? value : min));
+  }
+
+  function makeCropName(index) {
+    return `Crop ${index + 1}`;
+  }
+
+  function generateEvenGridCropBoxes(columns, rows) {
+    if (!editorStore.image?.width || !editorStore.image?.height) {
+      alert("請先上傳圖片");
+      return;
+    }
+
+    const imageW = editorStore.image.width;
+    const imageH = editorStore.image.height;
+    const cols = clampNumber(columns, 1, 21);
+    const rowCount = clampNumber(rows, 1, 31);
+
+    const colEdges = [];
+    const rowEdges = [];
+    for (let c = 0; c <= cols; c += 1) colEdges.push((imageW * c) / cols);
+    for (let r = 0; r <= rowCount; r += 1) rowEdges.push((imageH * r) / rowCount);
+
+    const boxes = [];
+    for (let r = 0; r < rowCount; r += 1) {
+      for (let c = 0; c < cols; c += 1) {
+        boxes.push({
+          x: colEdges[c],
+          y: rowEdges[r],
+          width: colEdges[c + 1] - colEdges[c],
+          height: rowEdges[r + 1] - rowEdges[r],
+          rotation: 0,
+          visible: true,
+          locked: false,
+          opacity: 1,
+          name: makeCropName(boxes.length)
+        });
+      }
+    }
+    return boxes;
+  }
+
+  function applyGeneratedBoxes(boxes, statusText) {
+    if (!Array.isArray(boxes) || !boxes.length) {
+      alert("沒有可建立的裁切框");
+      return;
+    }
+    saveHistory();
+    editorStore.boxes = boxes;
+    editorStore.selected = boxes.length ? [0] : [];
+    editorStore.activeBox = boxes.length ? 0 : -1;
+    editorStore.transformStatus = statusText;
+    renderLayers();
+    draw();
+  }
+
+  function readGridLineSettings() {
+    const verticalEl = document.getElementById("verticalLinesInput");
+    const horizontalEl = document.getElementById("horizontalLinesInput");
+    const verticalLines = clampNumber(parseInt(verticalEl?.value || "3", 10), 0, 20);
+    const horizontalLines = clampNumber(parseInt(horizontalEl?.value || "3", 10), 0, 30);
+    if (verticalEl) verticalEl.value = String(verticalLines);
+    if (horizontalEl) horizontalEl.value = String(horizontalLines);
+    return { verticalLines, horizontalLines, columns: verticalLines + 1, rows: horizontalLines + 1 };
+  }
+
+  function syncGridResultNote() {
+    const note = document.getElementById("gridResultNote");
+    if (!note) return;
+    const { verticalLines, horizontalLines, columns, rows } = readGridLineSettings();
+    note.textContent = `目前設定：縱向切割線 ${verticalLines} 條、橫向切割線 ${horizontalLines} 條 → 會產生 ${columns} 欄 × ${rows} 列，共 ${columns * rows} 個裁切框。`;
+  }
+
+  function generateCustomGridBoxes() {
+    const { columns, rows } = readGridLineSettings();
+    const boxes = generateEvenGridCropBoxes(columns, rows);
+    applyGeneratedBoxes(boxes, `已依設定產生 ${columns} 欄 × ${rows} 列平均裁切框`);
+  }
+
+  function generatePresetGrid(columns, rows) {
+    const verticalEl = document.getElementById("verticalLinesInput");
+    const horizontalEl = document.getElementById("horizontalLinesInput");
+    if (verticalEl) verticalEl.value = String(Math.max(0, columns - 1));
+    if (horizontalEl) horizontalEl.value = String(Math.max(0, rows - 1));
+    syncGridResultNote();
+    const boxes = generateEvenGridCropBoxes(columns, rows);
+    applyGeneratedBoxes(boxes, `已套用 ${columns}×${rows} 平均切格`);
+  }
+
   async function runAutoDetectCropBoxes({ resetHistory = false } = {}) {
     if (!editorStore.image) {
       alert("請先上傳圖片");
@@ -143,10 +254,15 @@ export function initToolbar() {
     editorStore.selected = detectedBoxes.length ? [0] : [];
     editorStore.activeBox = detectedBoxes.length ? 0 : -1;
 
+    const looksLikeFullImageBox = detectedBoxes.length === 1
+      && (detectedBoxes[0].width * detectedBoxes[0].height) >= (editorStore.image.width * editorStore.image.height * 0.82);
+
     if (!detectedBoxes.length && !previousBoxes.length) {
-      editorStore.transformStatus = "未偵測到裁切框，請手動新增";
+      editorStore.transformStatus = "未偵測到裁切框，請改用 4×4 / 5×8 平均切格";
     } else if (!detectedBoxes.length && previousBoxes.length) {
-      editorStore.transformStatus = "未偵測到裁切框，已清空舊裁切框，可手動新增";
+      editorStore.transformStatus = "未偵測到裁切框，已清空舊裁切框；建議改用 4×4 / 5×8 平均切格";
+    } else if (looksLikeFullImageBox) {
+      editorStore.transformStatus = "自動預測只找到整張圖；建議改用下方 4×4 / 5×8 平均切格";
     } else {
       editorStore.transformStatus = `已自動預測 ${detectedBoxes.length} 個裁切框`;
     }
@@ -296,6 +412,17 @@ export function initToolbar() {
   bindPress("selectAllBtn", selectAllBoxes);
   bindPress("deleteSelectedBtn", deleteSelectedAction);
   bindPress("autoDetectBtn", () => runAutoDetectCropBoxes({ resetHistory: false }));
+  bindPress("grid4x4Btn", () => generatePresetGrid(4, 4));
+  bindPress("grid5x8Btn", () => generatePresetGrid(5, 8));
+  bindPress("generateGridBtn", generateCustomGridBoxes);
+
+  const verticalLinesInput = document.getElementById("verticalLinesInput");
+  const horizontalLinesInput = document.getElementById("horizontalLinesInput");
+  [verticalLinesInput, horizontalLinesInput].forEach((input) => {
+    input?.addEventListener("input", syncGridResultNote);
+    input?.addEventListener("change", syncGridResultNote);
+  });
+  syncGridResultNote();
   syncMultiSelectButtons();
 
   bindPress("floatScrollTopBtn", () => {

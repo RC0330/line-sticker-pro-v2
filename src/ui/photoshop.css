@@ -2277,3 +2277,45 @@ body.multi-select-mode canvas {
 #autoDetectBtn.secondary-button {
   margin-top: -4px;
 }
+
+
+.grid-section {
+  gap: 10px;
+}
+
+.grid-preset-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.grid-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.grid-input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.grid-input-field input {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 10px;
+  border: 1px solid #4b5563;
+  background: #0f172a;
+  color: #fff;
+  padding: 10px 12px;
+  font-size: 16px;
+}
+
+@media (max-width: 900px) {
+  .grid-preset-buttons,
+  .grid-inputs {
+    grid-template-columns: 1fr;
+  }
+}
