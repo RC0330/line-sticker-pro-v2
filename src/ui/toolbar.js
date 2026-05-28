@@ -1,6 +1,7 @@
 import { editorStore } from "../store/editorStore.js";
 import { autoDetectCropBoxesFromImage } from "../ai/detect.js";
-import { createCropBoxCentered, deleteSelectedBoxes, distributeSelected, draw, fitImageToView, resetView, setImageAndFit, setPanMode, togglePanMode, zoomIn, zoomOut } from "../core/canvas.js";
+import { createCropBoxCentered, deleteSelectedBoxes, distributeSelected, draw, fitImageToView, replaceBoxes, resetView, setEditableGridTemplate, setImageAndFit, setPanMode, togglePanMode, zoomIn, zoomOut } from "../core/canvas.js";
+import { snapBoxesToContent } from "../ai/grid-snap.js";
 import { EXPORT_PRESETS, exportSelectedPng, exportZip, previewCrop } from "../core/exporter.js";
 import { undo, redo, saveHistory } from "../core/history.js";
 import { renderLayers } from "./layer-panel.js";
@@ -37,7 +38,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v28 已載入｜平均切格＋切割線設定</div>
+    <div class="version-badge">v29 已載入｜可拖曳切割線＋LINE 宮格模板</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -59,11 +60,13 @@ export function initToolbar() {
     <div class="tool-note auto-detect-note">上傳圖片後會先自動預測裁切框；若預測不準，可直接使用下方 4×4 / 5×8 平均切格，或自行設定縱向／橫向切割線數量。</div>
 
     <div class="tool-section grid-section">
-      <div class="tool-title">平均切格 / 切割線設定</div>
-      <div class="tool-note">可快速建立平均裁切框。縱向切割線 3 條 = 4 欄；橫向切割線 3 條 = 4 列。</div>
+      <div class="tool-title">LINE 宮格模板 / 可拖曳切割線</div>
+      <div class="tool-note">一鍵產生 LINE 16 宮格、8 宮格、5×8 或自訂模板；建立後可直接拖曳青色切割線調整。</div>
       <div class="grid-preset-buttons">
-        <button id="grid4x4Btn" type="button">4×4 平均切格</button>
+        <button id="gridLine16Btn" type="button">LINE 16 宮格</button>
+        <button id="gridLine8Btn" type="button">LINE 8 宮格</button>
         <button id="grid5x8Btn" type="button">5×8 平均切格</button>
+        <button id="grid4x4Btn" type="button">4×4 平均切格</button>
       </div>
       <div class="grid-inputs">
         <label class="grid-input-field">
@@ -76,7 +79,8 @@ export function initToolbar() {
         </label>
       </div>
       <div id="gridResultNote" class="tool-note"></div>
-      <button id="generateGridBtn" class="secondary-button" type="button">依切割線產生平均裁切框</button>
+      <button id="generateGridBtn" class="secondary-button" type="button">一鍵產生自訂宮格模板</button>
+      <button id="snapGridBtn" class="secondary-button" type="button">先平均切格，再自動吸附圖案邊界</button>
     </div>
 
     <div class="tool-section nudge-section">
@@ -187,18 +191,20 @@ export function initToolbar() {
     return boxes;
   }
 
-  function applyGeneratedBoxes(boxes, statusText) {
+  function applyGeneratedBoxes(boxes, statusText, options = {}) {
     if (!Array.isArray(boxes) || !boxes.length) {
       alert("沒有可建立的裁切框");
       return;
     }
-    saveHistory();
-    editorStore.boxes = boxes;
-    editorStore.selected = boxes.length ? [0] : [];
-    editorStore.activeBox = boxes.length ? 0 : -1;
-    editorStore.transformStatus = statusText;
-    renderLayers();
-    draw();
+    replaceBoxes(boxes, statusText, options);
+  }
+
+  function applyGridTemplate(columns, rows, label) {
+    if (!editorStore.image?.width || !editorStore.image?.height) {
+      alert("請先上傳圖片");
+      return;
+    }
+    setEditableGridTemplate(columns, rows, label || `已建立 ${columns}×${rows} 可拖曳切割線模板`);
   }
 
   function readGridLineSettings() {
@@ -215,23 +221,32 @@ export function initToolbar() {
     const note = document.getElementById("gridResultNote");
     if (!note) return;
     const { verticalLines, horizontalLines, columns, rows } = readGridLineSettings();
-    note.textContent = `目前設定：縱向切割線 ${verticalLines} 條、橫向切割線 ${horizontalLines} 條 → 會產生 ${columns} 欄 × ${rows} 列，共 ${columns * rows} 個裁切框。`;
+    note.textContent = `目前設定：縱向切割線 ${verticalLines} 條、橫向切割線 ${horizontalLines} 條 → ${columns} 欄 × ${rows} 列，共 ${columns * rows} 格。按「一鍵產生自訂宮格模板」後，可直接拖曳青色切割線。`;
   }
 
-  function generateCustomGridBoxes() {
-    const { columns, rows } = readGridLineSettings();
-    const boxes = generateEvenGridCropBoxes(columns, rows);
-    applyGeneratedBoxes(boxes, `已依設定產生 ${columns} 欄 × ${rows} 列平均裁切框`);
-  }
-
-  function generatePresetGrid(columns, rows) {
+  function setGridLineInputs(columns, rows) {
     const verticalEl = document.getElementById("verticalLinesInput");
     const horizontalEl = document.getElementById("horizontalLinesInput");
     if (verticalEl) verticalEl.value = String(Math.max(0, columns - 1));
     if (horizontalEl) horizontalEl.value = String(Math.max(0, rows - 1));
     syncGridResultNote();
+  }
+
+  function generateCustomGridBoxes() {
+    const { columns, rows } = readGridLineSettings();
+    applyGridTemplate(columns, rows, `已建立 ${columns} 欄 × ${rows} 列自訂宮格，可拖曳切割線調整`);
+  }
+
+  function generatePresetGrid(columns, rows, label = `${columns}×${rows}`) {
+    setGridLineInputs(columns, rows);
+    applyGridTemplate(columns, rows, `已套用 ${label} 模板，可直接拖曳切割線調整`);
+  }
+
+  function generateSnappedGridBoxes() {
+    const { columns, rows } = readGridLineSettings();
     const boxes = generateEvenGridCropBoxes(columns, rows);
-    applyGeneratedBoxes(boxes, `已套用 ${columns}×${rows} 平均切格`);
+    const snapped = snapBoxesToContent(editorStore.image, boxes);
+    applyGeneratedBoxes(snapped, `已先平均切成 ${columns} 欄 × ${rows} 列，並自動吸附到每格圖案邊界`);
   }
 
   async function runAutoDetectCropBoxes({ resetHistory = false } = {}) {
@@ -253,6 +268,7 @@ export function initToolbar() {
     editorStore.boxes = detectedBoxes;
     editorStore.selected = detectedBoxes.length ? [0] : [];
     editorStore.activeBox = detectedBoxes.length ? 0 : -1;
+    editorStore.gridTemplate = { active: false, columns: 0, rows: 0, verticalLines: [], horizontalLines: [] };
 
     const looksLikeFullImageBox = detectedBoxes.length === 1
       && (detectedBoxes[0].width * detectedBoxes[0].height) >= (editorStore.image.width * editorStore.image.height * 0.82);
@@ -412,9 +428,12 @@ export function initToolbar() {
   bindPress("selectAllBtn", selectAllBoxes);
   bindPress("deleteSelectedBtn", deleteSelectedAction);
   bindPress("autoDetectBtn", () => runAutoDetectCropBoxes({ resetHistory: false }));
-  bindPress("grid4x4Btn", () => generatePresetGrid(4, 4));
-  bindPress("grid5x8Btn", () => generatePresetGrid(5, 8));
+  bindPress("gridLine16Btn", () => generatePresetGrid(4, 4, "LINE 16 宮格 4×4"));
+  bindPress("gridLine8Btn", () => generatePresetGrid(4, 2, "LINE 8 宮格 4×2"));
+  bindPress("grid4x4Btn", () => generatePresetGrid(4, 4, "4×4 平均切格"));
+  bindPress("grid5x8Btn", () => generatePresetGrid(5, 8, "5×8 平均切格"));
   bindPress("generateGridBtn", generateCustomGridBoxes);
+  bindPress("snapGridBtn", generateSnappedGridBoxes);
 
   const verticalLinesInput = document.getElementById("verticalLinesInput");
   const horizontalLinesInput = document.getElementById("horizontalLinesInput");
