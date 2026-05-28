@@ -276,7 +276,7 @@ function drawGridTemplateGuides() {
 function hitGridTemplateGuide(pos) {
   const template = editorStore.gridTemplate;
   if (!template?.active || !editorStore.image) return null;
-  const threshold = 16 / (editorStore.zoom || 1);
+  const threshold = 9 / (editorStore.zoom || 1);
 
   for (let i = 0; i < (template.verticalLines || []).length; i += 1) {
     const x = template.verticalLines[i];
@@ -308,7 +308,7 @@ function selectGridCell(index) {
   if (index < 0 || index >= editorStore.boxes.length) return false;
   editorStore.selected = [index];
   editorStore.activeBox = index;
-  editorStore.deleteButtonBox = -1;
+  editorStore.deleteButtonBox = index;
   editorStore.hoverBox = -1;
   editorStore.transformStatus = `已選取第 ${index + 1} 格：可拖白點調整；拖青色線可改整列/欄`;
   renderLayers();
@@ -399,7 +399,8 @@ function getDeleteButtonRect(box) {
 }
 
 function drawDeleteButton(box, index) {
-  if (editorStore.deleteButtonBox !== index) return;
+  const shouldShowDelete = editorStore.deleteButtonBox === index || editorStore.selected.includes(index);
+  if (!shouldShowDelete) return;
   const button = getDeleteButtonRect(box);
   const radius = button.size / 2;
 
@@ -616,8 +617,8 @@ function drawGridEditHint() {
   ctx.fillRect(12, 52, 260, 46);
   ctx.fillStyle = "#e0f2fe";
   ctx.font = "12px Arial";
-  ctx.fillText("宮格模式：點格子選取；拖青色線調整欄列", 22, 72);
-  ctx.fillText("選取格後拖白點可單格微調", 22, 90);
+  ctx.fillText("宮格模式：點格子內部選取；拖青色線調整欄列", 22, 72);
+  ctx.fillText("選取格會顯示白點與 ❌，未選格不畫框", 22, 90);
   ctx.restore();
 }
 
@@ -703,7 +704,8 @@ function toggleBoxSelection(index) {
 }
 
 function isPointInDeleteButton(pos, box, index = editorStore.boxes.indexOf(box)) {
-  if (editorStore.deleteButtonBox !== index) return false;
+  const shouldShowDelete = editorStore.deleteButtonBox === index || editorStore.selected.includes(index);
+  if (!shouldShowDelete) return false;
   const button = getDeleteButtonRect(box);
   const half = button.size / 2;
   return (
@@ -986,8 +988,8 @@ function snapshotSelected() {
 }
 
 function startGroupResize(pos, handleName) {
-  editorStore.deleteButtonBox = -1;
-  deactivateGridTemplate(true);
+  if (!editorStore.gridTemplate?.active) editorStore.deleteButtonBox = -1;
+  if (!editorStore.gridTemplate?.active) deactivateGridTemplate(true);
   groupResizing = true;
   editorStore.resizeHandle = handleName;
   groupResizeStartBounds = getBounds(getSelectedBoxes());
@@ -999,8 +1001,8 @@ function startGroupResize(pos, handleName) {
 }
 
 function startSingleResize(pos, index, handleName) {
-  editorStore.deleteButtonBox = -1;
-  deactivateGridTemplate(true);
+  if (!editorStore.gridTemplate?.active) editorStore.deleteButtonBox = -1;
+  if (!editorStore.gridTemplate?.active) deactivateGridTemplate(true);
   const box = editorStore.boxes[index];
   editorStore.activeBox = index;
   editorStore.resizeHandle = handleName;
@@ -1018,8 +1020,8 @@ function startSingleResize(pos, index, handleName) {
 }
 
 function startRotate(pos, index = null) {
-  editorStore.deleteButtonBox = -1;
-  deactivateGridTemplate(true);
+  if (!editorStore.gridTemplate?.active) editorStore.deleteButtonBox = -1;
+  if (!editorStore.gridTemplate?.active) deactivateGridTemplate(true);
   rotating = true;
 
   if (index !== null) {
@@ -1113,7 +1115,7 @@ function onPointerDown(e) {
 
   // 手機在畫布空白處滑動時，讓瀏覽器可以上下捲動到上方功能區。
   // 若點到裁切框、控制點、開啟拖動畫布或多選模式，才攔截觸控事件進行編輯。
-  if (isTouch && !editorStore.viewPanMode && !editorStore.mobileMultiSelectMode && !isPointOnEditableTarget(pos)) {
+  if (isTouch && !editorStore.gridTemplate?.active && !editorStore.viewPanMode && !editorStore.mobileMultiSelectMode && !isPointOnEditableTarget(pos)) {
     return;
   }
 
