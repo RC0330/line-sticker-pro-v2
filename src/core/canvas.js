@@ -349,6 +349,16 @@ function handleGridTemplatePointerDown(e, pos) {
   const cellIndex = getGridCellIndexAt(pos);
   if (cellIndex >= 0) {
     selectGridCell(cellIndex);
+
+    // 電腦版滑鼠：點住格子內部即可直接拖曳移動該格。
+    // 手機版保留「先點選，再用白點/微調」的穩定操作，避免誤拖。
+    const isTouchPointer = e.pointerType === "touch" || e.pointerType === "pen";
+    if (!isTouchPointer) {
+      startDrag(pos, cellIndex, false);
+      editorStore.deleteButtonBox = cellIndex;
+      renderLayers();
+      draw();
+    }
     return true;
   }
 
@@ -617,7 +627,7 @@ function drawGridEditHint() {
   ctx.fillRect(12, 52, 260, 46);
   ctx.fillStyle = "#e0f2fe";
   ctx.font = "12px Arial";
-  ctx.fillText("宮格模式：點格子內部選取；拖青色線調整欄列", 22, 72);
+  ctx.fillText("宮格模式：點/拖格子可選取移動；拖青色線調整欄列", 22, 72);
   ctx.fillText("選取格會顯示白點與 ❌，未選格不畫框", 22, 90);
   ctx.restore();
 }
@@ -1192,8 +1202,17 @@ function onPointerDown(e) {
         editorStore.selected = [index];
       }
       editorStore.activeBox = index;
-      editorStore.transformStatus = "長按可顯示 ❌，拖曳可移動裁切框";
-      startLongPressForDelete(e.pointerId, index, screenPoint);
+
+      if (!isTouch) {
+        // 電腦版：滑鼠點住裁切框內部立即進入拖曳移動，並顯示左上角 ❌。
+        startDrag(pos, index, isMultiSelectKey(e));
+        editorStore.deleteButtonBox = index;
+        editorStore.transformStatus = "拖曳滑鼠可移動裁切框";
+      } else {
+        editorStore.transformStatus = "長按可顯示 ❌，拖曳可移動裁切框";
+        startLongPressForDelete(e.pointerId, index, screenPoint);
+      }
+
       renderLayers();
       draw();
       return;
