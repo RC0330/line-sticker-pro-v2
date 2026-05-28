@@ -7,7 +7,7 @@ import { renderLayers } from "./layer-panel.js";
 export function initToolbar() {
   const toolbar = document.getElementById("toolbar");
 
-  function renderPresetOptions() {
+  function getPresetEntries() {
     const fallbackPresets = {
       scale1: { label: "原始裁切 1x" },
       scale2: { label: "原始裁切 2x" },
@@ -19,14 +19,24 @@ export function initToolbar() {
       lineEmojiTab: { label: "LINE表情貼Tab 96×74" }
     };
     const presets = Object.keys(EXPORT_PRESETS || {}).length >= 8 ? EXPORT_PRESETS : fallbackPresets;
-    return Object.entries(presets)
+    return Object.entries(presets);
+  }
+
+  function renderPresetOptions() {
+    return getPresetEntries()
       .map(([key, preset]) => `<option value="${key}">${preset.label}</option>`)
+      .join("");
+  }
+
+  function renderPresetButtons() {
+    return getPresetEntries()
+      .map(([key, preset]) => `<button class="preset-choice" type="button" data-preset="${key}">${preset.label}</button>`)
       .join("");
   }
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v25 已載入｜展開/Layers/長按回饋修正</div>
+    <div class="version-badge">v26 已載入｜手機規格選單＋預覽加大</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -95,6 +105,9 @@ export function initToolbar() {
       <select id="exportPreset">
         ${renderPresetOptions()}
       </select>
+      <div id="presetButtonGrid" class="preset-button-grid">
+        ${renderPresetButtons()}
+      </div>
       <div id="presetNote" class="tool-note"></div>
 
       <button id="previewCropBtn">預覽選取裁切</button>
@@ -371,24 +384,30 @@ export function initToolbar() {
   const tolerance = document.getElementById("bgTolerance");
   const feather = document.getElementById("bgFeather");
   const preset = document.getElementById("exportPreset");
+  const presetButtons = Array.from(document.querySelectorAll(".preset-choice"));
   const presetNote = document.getElementById("presetNote");
   const tolLabel = document.getElementById("tolLabel");
   const featherLabel = document.getElementById("featherLabel");
 
   function syncExportOptions() {
+    const presetKey = preset.value || "scale1";
+    const presetDef = EXPORT_PRESETS[presetKey] || EXPORT_PRESETS.scale1;
     editorStore.exportOptions = {
       removeBackground: removeBgCheck.checked,
       tolerance: Number(tolerance.value),
       feather: Number(feather.value),
-      preset: preset.value,
-      scale: EXPORT_PRESETS[preset.value]?.scale || 1,
-      margin: preset.value === "lineSticker" ? 10 : 0
+      preset: presetKey,
+      scale: presetDef?.scale || 1,
+      margin: presetKey === "lineSticker" ? 10 : 0
     };
+    presetButtons.forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.preset === presetKey);
+    });
     editorStore.bgTolerance = Number(tolerance.value);
     editorStore.bgFeather = Number(feather.value);
     tolLabel.textContent = tolerance.value;
     featherLabel.textContent = feather.value;
-    const selectedPreset = EXPORT_PRESETS[preset.value];
+    const selectedPreset = EXPORT_PRESETS[preset.value] || EXPORT_PRESETS.scale1;
     if (selectedPreset?.type === "fit") {
       presetNote.textContent = `${selectedPreset.label}：等比例縮放放入透明畫布，保留完整內容。`;
     } else if (selectedPreset?.type === "cover") {
@@ -397,6 +416,21 @@ export function initToolbar() {
       presetNote.textContent = `${selectedPreset.label}：依裁切框尺寸乘倍率輸出。`;
     }
   }
+
+  presetButtons.forEach((btn) => {
+    btn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      preset.value = btn.dataset.preset;
+      syncExportOptions();
+    }, { passive: false });
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      preset.value = btn.dataset.preset;
+      syncExportOptions();
+    });
+  });
 
   [removeBgCheck, tolerance, feather, preset].forEach((el) => {
     el.addEventListener("input", syncExportOptions);
