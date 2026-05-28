@@ -293,6 +293,68 @@ function hitGridTemplateGuide(pos) {
   return null;
 }
 
+
+function getGridCellIndexAt(pos) {
+  if (!editorStore.gridTemplate?.active) return -1;
+  for (let index = 0; index < editorStore.boxes.length; index += 1) {
+    const box = editorStore.boxes[index];
+    if (!box || box.visible === false || box.locked) continue;
+    if (pointInBox(pos.x, pos.y, box)) return index;
+  }
+  return -1;
+}
+
+function selectGridCell(index) {
+  if (index < 0 || index >= editorStore.boxes.length) return false;
+  editorStore.selected = [index];
+  editorStore.activeBox = index;
+  editorStore.deleteButtonBox = -1;
+  editorStore.hoverBox = -1;
+  editorStore.transformStatus = `已選取第 ${index + 1} 格：可拖白點調整；拖青色線可改整列/欄`;
+  renderLayers();
+  draw();
+  return true;
+}
+
+function handleGridTemplatePointerDown(e, pos) {
+  if (!editorStore.gridTemplate?.active) return false;
+
+  const gridGuideHit = hitGridTemplateGuide(pos);
+  if (gridGuideHit) {
+    startGridGuideDrag(gridGuideHit);
+    renderLayers();
+    draw();
+    return true;
+  }
+
+  const selectedIndex = editorStore.selected.length === 1 ? editorStore.selected[0] : -1;
+  const selectedBox = editorStore.boxes[selectedIndex];
+
+  if (selectedBox && selectedBox.visible !== false && selectedBox.locked !== true) {
+    if (isPointInDeleteButton(pos, selectedBox, selectedIndex)) {
+      deleteBoxAt(selectedIndex);
+      return true;
+    }
+
+    const handle = hitTransformHandles(pos, selectedBox);
+    if (handle) {
+      if (handle.name === "rotate") startRotate(pos, selectedIndex);
+      else startSingleResize(pos, selectedIndex, handle.name);
+      renderLayers();
+      draw();
+      return true;
+    }
+  }
+
+  const cellIndex = getGridCellIndexAt(pos);
+  if (cellIndex >= 0) {
+    selectGridCell(cellIndex);
+    return true;
+  }
+
+  return false;
+}
+
 function startGridGuideDrag(hit) {
   draggingGridGuide = hit;
   gridGuideMoved = false;
@@ -493,11 +555,10 @@ export function draw() {
     const selected = editorStore.selected.includes(index);
     const hover = editorStore.hoverBox === index;
 
-    // 宮格模板啟用時，隱藏未選取裁切框外框，避免每格框線和切割線重疊造成手機很難點選。
-    // 只保留青色可拖曳切割線；點到某一格後，才顯示該格的裁切框與控制點。
-    if (isGridTemplateActive && !selected && !hover) return;
+    // 宮格模板啟用時只顯示「已選取格」，避免未選取格線重疊造成點選困難。
+    if (isGridTemplateActive && !selected) return;
 
-    drawRotatedRect(box, selected, hover, index);
+    drawRotatedRect(box, selected, isGridTemplateActive ? false : hover, index);
 
     if (selected && editorStore.selected.length === 1) {
       ctx.strokeStyle = "#00ffff";
@@ -544,6 +605,20 @@ export function draw() {
 
   ctx.restore();
   drawZoomHud();
+  drawGridEditHint();
+}
+
+
+function drawGridEditHint() {
+  if (!editorStore.gridTemplate?.active) return;
+  ctx.save();
+  ctx.fillStyle = "rgba(15, 23, 42, 0.82)";
+  ctx.fillRect(12, 52, 260, 46);
+  ctx.fillStyle = "#e0f2fe";
+  ctx.font = "12px Arial";
+  ctx.fillText("宮格模式：點格子選取；拖青色線調整欄列", 22, 72);
+  ctx.fillText("選取格後拖白點可單格微調", 22, 90);
+  ctx.restore();
 }
 
 function drawViewportBackground() {
@@ -739,7 +814,10 @@ function pointInRect(pos, rect) {
 }
 
 function isPointOnEditableTarget(pos) {
-  if (hitGridTemplateGuide(pos)) return true;
+  if (editorStore.gridTemplate?.active) {
+    if (hitGridTemplateGuide(pos)) return true;
+    return getGridCellIndexAt(pos) >= 0;
+  }
 
   if (editorStore.selected.length > 1) {
     const bounds = getBounds(getSelectedBoxes());
@@ -1048,15 +1126,11 @@ function onPointerDown(e) {
     return;
   }
 
-  editorStore.activeBox = -1;
-
-  const gridGuideHit = hitGridTemplateGuide(pos);
-  if (gridGuideHit) {
-    startGridGuideDrag(gridGuideHit);
-    renderLayers();
-    draw();
-    return;
+  if (editorStore.gridTemplate?.active) {
+    if (handleGridTemplatePointerDown(e, pos)) return;
   }
+
+  editorStore.activeBox = -1;
 
   if (editorStore.selected.length > 1) {
     const bounds = getBounds(getSelectedBoxes());
@@ -1179,10 +1253,12 @@ function onPointerMove(e) {
 
   editorStore.hoverBox = -1;
 
-  editorStore.boxes.forEach((box, index) => {
-    if (box.visible === false) return;
-    if (pointInBox(pos.x, pos.y, box)) editorStore.hoverBox = index;
-  });
+  if (!editorStore.gridTemplate?.active) {
+    editorStore.boxes.forEach((box, index) => {
+      if (box.visible === false) return;
+      if (pointInBox(pos.x, pos.y, box)) editorStore.hoverBox = index;
+    });
+  }
 
   if (editorStore.selecting && editorStore.selectionRect) {
     editorStore.selectionRect.width = pos.x - editorStore.selectionRect.x;
