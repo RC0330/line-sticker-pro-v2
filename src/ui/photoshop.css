@@ -1,0 +1,2165 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #111827;
+  color: white;
+  font-family: sans-serif;
+}
+
+.workspace {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+}
+
+.left-panel {
+  width: 220px;
+  background: #1f2937;
+  border-right: 1px solid #374151;
+}
+
+.right-panel {
+  width: 280px;
+  background: #1f2937;
+  border-left: 1px solid #374151;
+}
+
+.editor {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+canvas {
+  background: #0f172a;
+  box-shadow:
+    0 0 30px rgba(0,0,0,0.5);
+}
+
+.toolbar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+}
+
+button {
+  background: #2563eb;
+  border: none;
+  color: white;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #3b82f6;
+}
+
+.layers-title {
+  padding: 20px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.layer-item {
+  padding: 12px 20px;
+  border-bottom:
+    1px solid #374151;
+}
+
+.layer-item {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding: 12px 20px;
+
+  border-bottom:
+    1px solid #374151;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.layer-item:hover {
+
+  background:
+    rgba(255,255,255,0.06);
+}
+
+.layer-item.active {
+
+  background:
+    rgba(0,255,255,0.15);
+
+  border-left:
+    4px solid #00ffff;
+}
+
+.layer-left {
+
+  display: flex;
+
+  gap: 6px;
+}
+
+.eye-btn,
+.lock-btn {
+
+  background: transparent;
+
+  border: none;
+
+  cursor: pointer;
+
+  font-size: 16px;
+
+  padding: 0;
+}
+
+.layer-name {
+
+  flex: 1;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+
+.guide-line {
+
+  position: absolute;
+
+  background: #00ffff;
+
+  pointer-events: none;
+
+  z-index: 9999;
+}
+
+.guide-line.v {
+
+  width: 1px;
+
+  height: 100%;
+}
+
+.guide-line.h {
+
+  height: 1px;
+
+  width: 100%;
+}
+
+canvas {
+
+  cursor: default;
+}
+
+canvas.dragging {
+
+  cursor: move;
+}
+
+.layer-item {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 8px;
+
+  border-bottom:
+    1px solid #333;
+
+  background:
+    #1e1e1e;
+}
+
+.layer-item.active {
+
+  background:
+    #003b50;
+
+  box-shadow:
+    inset 0 0 0 1px #00ffff;
+}
+
+.layer-title {
+
+  flex: 1;
+
+  background: #222;
+
+  color: white;
+
+  border: none;
+
+  padding: 4px;
+}
+
+.layer-item button {
+
+  background: #333;
+
+  color: white;
+
+  border: none;
+
+  padding: 4px 8px;
+
+  cursor: pointer;
+}
+}
+.tool-section {
+  border: 1px solid #374151;
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255,255,255,0.05);
+  line-height: 1.5;
+}
+
+.tool-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.tool-note,
+.layers-hint {
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+.layer-drag-handle {
+  color: #94a3b8;
+  cursor: grab;
+  user-select: none;
+}
+
+.layer-item.dragging-layer {
+  opacity: 0.45;
+}
+
+.layer-item.drop-target {
+  outline: 2px solid #00ffff;
+  background: rgba(0,255,255,0.12);
+}
+
+.tool-section {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255,255,255,0.05);
+}
+
+.tool-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.tool-note {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.tool-check,
+.tool-label {
+  display: block;
+  font-size: 13px;
+  color: #e5e7eb;
+  margin: 8px 0 4px;
+}
+
+.export-section input[type="range"],
+.export-section select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.export-section select {
+  background: #111827;
+  color: white;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.crop-preview {
+  margin-top: 10px;
+  max-height: 220px;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.crop-preview-item {
+  min-height: 72px;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 10px;
+  padding: 6px;
+  background-image:
+    linear-gradient(45deg, #374151 25%, transparent 25%),
+    linear-gradient(-45deg, #374151 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #374151 75%),
+    linear-gradient(-45deg, transparent 75%, #374151 75%);
+  background-size: 18px 18px;
+  background-position: 0 0, 0 9px, 9px -9px, -9px 0px;
+  background-color: #111827;
+}
+
+.crop-preview-item img {
+  width: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.preview-empty {
+  grid-column: 1 / -1;
+  padding: 10px;
+  color: #cbd5e1;
+  font-size: 12px;
+  border: 1px dashed rgba(255,255,255,0.18);
+  border-radius: 10px;
+}
+
+/* Mobile / tablet friendly layout */
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+.left-panel,
+.right-panel {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+button,
+select,
+input[type="range"],
+input[type="file"] {
+  min-height: 44px;
+}
+
+.tool-label,
+.tool-check {
+  display: block;
+  font-size: 13px;
+}
+
+.tool-section select,
+.tool-section input[type="range"],
+.tool-section button {
+  width: 100%;
+}
+
+.crop-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.crop-preview-item {
+  background: repeating-conic-gradient(#475569 0% 25%, #334155 0% 50%) 50% / 16px 16px;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.crop-preview-item img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.preview-empty {
+  color: #cbd5e1;
+  font-size: 12px;
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+  body {
+    overflow: auto;
+  }
+
+  .workspace {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .left-panel,
+  .right-panel {
+    width: 100%;
+    max-height: 38vh;
+    border: 0;
+  }
+
+  .left-panel {
+    order: 1;
+  }
+
+  .editor {
+    order: 2;
+    width: 100%;
+    min-height: 54vh;
+    overflow: auto;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .right-panel {
+    order: 3;
+    max-height: 30vh;
+  }
+
+  .toolbar-wrap {
+    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .tool-section,
+  .export-section,
+  input[type="file"] {
+    grid-column: 1 / -1;
+  }
+
+  canvas {
+    max-width: none;
+    width: auto;
+    height: auto;
+    touch-action: none;
+  }
+}
+
+.view-section .zoom-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .editor {
+    touch-action: none;
+    min-height: 62vh;
+  }
+
+  .left-panel {
+    max-height: 44vh;
+  }
+
+  .view-section {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(31,41,55,0.96);
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* v8 mobile zoom/pan fix */
+.editor {
+  position: relative;
+}
+
+.floating-zoom {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 20;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.84);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(8px);
+}
+
+.floating-zoom button {
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+button.active,
+.floating-zoom button.active {
+  background: #0ea5e9;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35);
+}
+
+body.pan-mode canvas {
+  cursor: grab;
+}
+
+body.pan-mode canvas.dragging {
+  cursor: grabbing;
+}
+
+@media (max-width: 900px) {
+  .floating-zoom {
+    position: sticky;
+    top: 8px;
+    left: 8px;
+    margin: 8px;
+    align-self: flex-start;
+  }
+
+  .editor {
+    overflow: hidden;
+    min-height: 62vh;
+    height: 62vh;
+    touch-action: none;
+    overscroll-behavior: contain;
+  }
+
+  canvas {
+    touch-action: none !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .view-section {
+    order: -10;
+  }
+}
+
+/* v9 mobile button layout: compact top controls + bottom floating canvas toolbar */
+@media (max-width: 900px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .workspace {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    min-height: 100vh;
+  }
+
+  .left-panel {
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .toolbar-wrap {
+    padding: 10px;
+    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .toolbar-wrap > input[type="file"] {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 38px;
+    font-size: 14px;
+  }
+
+  .toolbar-wrap > button,
+  .toolbar-wrap .tool-section button {
+    min-height: 42px;
+    padding: 9px 10px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  #addBoxBtn {
+    grid-column: 1 / -1;
+    min-height: 50px;
+    font-size: 18px;
+  }
+
+  .view-section {
+    grid-column: 1 / -1;
+    position: static;
+    padding: 10px;
+    background: rgba(31,41,55,0.86);
+  }
+
+  .view-section .tool-title {
+    margin-bottom: 4px;
+    font-size: 17px;
+  }
+
+  .view-section .tool-note {
+    display: none;
+  }
+
+  .view-section .zoom-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  #fitViewBtn,
+  #resetViewBtn,
+  #panModeBtn {
+    margin-top: 8px;
+  }
+
+  #panModeBtn {
+    background: #0891b2;
+  }
+
+  #panModeBtn.active {
+    background: #0ea5e9;
+  }
+
+  .tool-section:not(.view-section):not(.export-section) {
+    grid-column: 1 / -1;
+    padding: 10px;
+  }
+
+  #distributeHBtn,
+  #distributeVBtn {
+    grid-column: span 1;
+    font-size: 15px;
+  }
+
+  .export-section {
+    grid-column: 1 / -1;
+  }
+
+  .editor {
+    order: 2;
+    position: relative;
+    width: 100%;
+    height: 68vh;
+    min-height: 520px;
+    max-height: 78vh;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    touch-action: none;
+  }
+
+  canvas {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    touch-action: none;
+  }
+
+  .floating-zoom {
+    position: fixed;
+    top: auto;
+    left: 50%;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: calc(100vw - 20px);
+    max-width: 520px;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 52px 52px 1fr 1.25fr;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.94);
+    border: 1px solid rgba(255,255,255,0.22);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+    backdrop-filter: blur(12px);
+  }
+
+  .floating-zoom button {
+    min-height: 44px;
+    padding: 8px 8px;
+    border-radius: 13px;
+    font-size: 16px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  #floatPanModeBtn {
+    background: #0891b2;
+  }
+
+  #floatPanModeBtn.active {
+    background: #0ea5e9;
+  }
+
+  .right-panel {
+    order: 3;
+    width: 100%;
+    max-height: 28vh;
+    overflow: auto;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar-wrap {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .toolbar-wrap > button,
+  .toolbar-wrap .tool-section button {
+    font-size: 14px;
+  }
+
+  #addBoxBtn {
+    font-size: 17px;
+  }
+
+  .editor {
+    height: 64vh;
+    min-height: 460px;
+  }
+
+  .floating-zoom {
+    width: calc(100vw - 14px);
+    grid-template-columns: 46px 46px 0.9fr 1.15fr;
+    gap: 6px;
+    padding: 7px;
+  }
+
+  .floating-zoom button {
+    min-height: 42px;
+    font-size: 14px;
+    padding: 7px 6px;
+  }
+}
+
+
+/* v10 mobile layout: vertical left floating toolbar + larger image viewport */
+@media (max-width: 900px) {
+  .view-section {
+    display: none;
+  }
+
+  .toolbar-wrap {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .editor {
+    height: 74vh;
+    min-height: 560px;
+    max-height: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .floating-zoom {
+    position: absolute;
+    top: 12px;
+    left: 10px;
+    bottom: auto;
+    transform: none;
+    width: 62px;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 7px;
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.92);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34);
+  }
+
+  .floating-zoom button {
+    width: 100%;
+    min-height: 46px;
+    padding: 8px 4px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.1;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  #floatPanModeBtn {
+    min-height: 64px;
+    font-size: 13px;
+  }
+
+  .right-panel {
+    max-height: 34vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .editor {
+    height: 76vh;
+    min-height: 580px;
+  }
+
+  .floating-zoom {
+    top: 10px;
+    left: 8px;
+    width: 58px;
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .floating-zoom button {
+    min-height: 44px;
+    font-size: 14px;
+    padding: 6px 3px;
+  }
+
+  #floatPanModeBtn {
+    min-height: 60px;
+    font-size: 12px;
+  }
+}
+
+/* v13 mobile usability: keep vertical canvas controls, add function jump, and make viewport taller */
+@media (max-width: 900px) {
+  .editor {
+    height: 78vh;
+    min-height: 600px;
+    overscroll-behavior: auto;
+  }
+
+  .floating-zoom {
+    width: 60px;
+    z-index: 1200;
+    pointer-events: auto;
+  }
+
+  .floating-zoom button {
+    pointer-events: auto;
+    touch-action: manipulation;
+  }
+
+  #floatScrollTopBtn {
+    background: #475569;
+    min-height: 50px;
+    font-size: 13px;
+  }
+
+  #distributeHBtn::after,
+  #distributeVBtn::after {
+    content: "至少3框";
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.75;
+  }
+}
+
+@media (max-width: 480px) {
+  .editor {
+    height: 80vh;
+    min-height: 620px;
+  }
+
+  .floating-zoom {
+    width: 56px;
+  }
+}
+
+
+/* v14 mobile Undo / Redo controls */
+.quick-history-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.quick-history-buttons button {
+  background: #475569;
+}
+
+#floatUndoBtn,
+#floatRedoBtn {
+  background: #475569;
+}
+
+@media (max-width: 900px) {
+  .quick-history-buttons {
+    grid-column: 1 / -1;
+  }
+
+  .floating-zoom {
+    width: 66px;
+  }
+
+  .floating-zoom button {
+    min-height: 42px;
+    font-size: 13px;
+  }
+
+  #floatPanModeBtn,
+  #floatUndoBtn,
+  #floatRedoBtn,
+  #floatScrollTopBtn {
+    min-height: 48px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-zoom {
+    width: 62px;
+  }
+
+  .floating-zoom button {
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  #floatPanModeBtn,
+  #floatUndoBtn,
+  #floatRedoBtn,
+  #floatScrollTopBtn {
+    min-height: 46px;
+    font-size: 11px;
+  }
+}
+
+
+/* v15: make Undo / Redo impossible to miss on desktop and mobile */
+.version-badge {
+  grid-column: 1 / -1;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(14, 165, 233, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #e0f2fe;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.quick-history-top {
+  grid-column: 1 / -1;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 2px 0;
+  background: rgba(31, 41, 55, 0.96);
+}
+
+.quick-history-buttons button {
+  background: #dc2626;
+  color: #fff;
+  min-height: 48px;
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.24);
+}
+
+.quick-history-buttons button:hover {
+  background: #ef4444;
+}
+
+#floatUndoBtn,
+#floatRedoBtn {
+  background: #dc2626 !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.22);
+}
+
+@media (max-width: 900px) {
+  .version-badge {
+    font-size: 12px;
+    padding: 7px 8px;
+  }
+
+  .quick-history-top {
+    position: sticky;
+    top: 0;
+    z-index: 80;
+  }
+
+  .quick-history-buttons button {
+    min-height: 46px;
+    font-size: 15px;
+  }
+
+  .floating-zoom {
+    width: 68px !important;
+    z-index: 2000 !important;
+  }
+
+  #floatUndoBtn,
+  #floatRedoBtn {
+    min-height: 50px !important;
+    font-size: 12px !important;
+    line-height: 1.15 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-zoom {
+    width: 64px !important;
+  }
+
+  .quick-history-buttons button {
+    min-height: 44px;
+    font-size: 14px;
+  }
+}
+
+/* v16 mobile crop-box nudge controls */
+.nudge-section {
+  border-color: rgba(14, 165, 233, 0.35);
+}
+
+.nudge-inline-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.floating-nudge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1001;
+  width: 150px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-areas:
+    "title title title"
+    ". up ."
+    "left step right"
+    ". down .";
+  gap: 6px;
+  padding: 8px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(255,255,255,0.22);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(12px);
+}
+
+.floating-nudge .nudge-title {
+  grid-area: title;
+  text-align: center;
+  color: #e5e7eb;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
+}
+
+.floating-nudge button {
+  min-height: 42px;
+  padding: 6px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.floating-nudge .nudge-up { grid-area: up; }
+.floating-nudge .nudge-left { grid-area: left; }
+.floating-nudge .nudge-right { grid-area: right; }
+.floating-nudge .nudge-down { grid-area: down; }
+.floating-nudge .nudge-step {
+  grid-area: step;
+  font-size: 12px;
+  background: #0891b2;
+}
+
+@media (max-width: 900px) {
+  .nudge-section {
+    grid-column: 1 / -1;
+  }
+
+  .nudge-section .tool-note {
+    display: block;
+  }
+
+  .floating-nudge {
+    top: 10px;
+    right: 8px;
+    width: 132px;
+    gap: 5px;
+    padding: 6px;
+  }
+
+  .floating-nudge button {
+    min-height: 38px;
+    padding: 5px;
+    font-size: 17px;
+  }
+
+  .floating-nudge .nudge-step {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-nudge {
+    top: 10px;
+    right: 6px;
+    width: 118px;
+    gap: 4px;
+    padding: 5px;
+  }
+
+  .floating-nudge button {
+    min-height: 35px;
+    border-radius: 10px;
+    font-size: 16px;
+  }
+
+  .floating-nudge .nudge-title {
+    font-size: 11px;
+  }
+
+  .floating-nudge .nudge-step {
+    font-size: 10px;
+  }
+}
+
+/* v17 mobile multi-select + restored pinch zoom helpers */
+.mobile-select-top {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+#multiSelectBtn,
+#floatMultiSelectBtn {
+  background: #7c3aed;
+}
+
+#multiSelectBtn.active,
+#floatMultiSelectBtn.active,
+body.multi-select-mode #floatMultiSelectBtn {
+  background: #f59e0b !important;
+  color: #111827 !important;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.55), 0 8px 18px rgba(0,0,0,0.28);
+}
+
+body.multi-select-mode canvas {
+  cursor: copy;
+}
+
+@media (max-width: 900px) {
+  .mobile-select-top button {
+    min-height: 44px;
+    font-size: 14px;
+    font-weight: 900;
+  }
+
+  #floatMultiSelectBtn {
+    min-height: 46px !important;
+    font-size: 11px !important;
+    line-height: 1.1 !important;
+  }
+
+  .floating-zoom {
+    width: 70px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-select-top {
+    gap: 6px;
+  }
+
+  .mobile-select-top button {
+    font-size: 13px;
+    min-height: 42px;
+  }
+
+  .floating-zoom {
+    width: 66px !important;
+  }
+
+  #floatMultiSelectBtn {
+    min-height: 42px !important;
+    font-size: 10.5px !important;
+  }
+}
+
+
+/* v18 mobile layout cleanup: bigger canvas, compact controls, collapsible export */
+@media (max-width: 900px) {
+  .version-badge {
+    font-size: 12px;
+    padding: 6px 8px;
+    min-height: auto;
+  }
+
+  .quick-history-top,
+  .nudge-section,
+  .view-section,
+  .toolbar-wrap > .tool-section:not(.export-section):not(.nudge-section):not(.view-section) {
+    display: none !important;
+  }
+
+  .toolbar-wrap {
+    padding: 8px 10px;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mobile-select-top {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .mobile-select-top button,
+  #addBoxBtn,
+  #distributeHBtn,
+  #distributeVBtn {
+    min-height: 42px !important;
+    padding: 8px 10px !important;
+    font-size: 14px !important;
+    border-radius: 12px !important;
+  }
+
+  #addBoxBtn {
+    min-height: 46px !important;
+  }
+
+  #distributeHBtn,
+  #distributeVBtn {
+    grid-column: span 1;
+  }
+
+  .export-section {
+    grid-column: 1 / -1;
+    padding: 0 !important;
+    overflow: hidden;
+  }
+
+  .export-section > summary.tool-title {
+    list-style: none;
+    cursor: pointer;
+    padding: 12px 14px;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 900;
+    background: rgba(255,255,255,0.05);
+  }
+
+  .export-section > summary.tool-title::-webkit-details-marker {
+    display: none;
+  }
+
+  .export-section > summary.tool-title::after {
+    content: "展開";
+    float: right;
+    font-size: 13px;
+    color: #93c5fd;
+  }
+
+  .export-section[open] > summary.tool-title::after {
+    content: "收合";
+  }
+
+  .export-section[open] > :not(summary) {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+
+  .export-section button {
+    min-height: 42px !important;
+    font-size: 14px !important;
+    margin-top: 6px;
+  }
+
+  .crop-preview {
+    max-height: 120px;
+  }
+
+  .editor {
+    height: 82vh !important;
+    min-height: 620px !important;
+    max-height: none !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .floating-zoom {
+    top: 10px !important;
+    left: 8px !important;
+    width: 54px !important;
+    gap: 5px !important;
+    padding: 5px !important;
+    border-radius: 14px !important;
+  }
+
+  .floating-zoom button {
+    min-height: 40px !important;
+    padding: 5px 2px !important;
+    font-size: 12px !important;
+    line-height: 1.05 !important;
+    border-radius: 11px !important;
+  }
+
+  .floating-nudge {
+    top: 10px !important;
+    right: 8px !important;
+    width: 92px !important;
+    padding: 6px !important;
+    gap: 5px !important;
+    border-radius: 14px !important;
+  }
+
+  .floating-nudge .nudge-title {
+    font-size: 11px !important;
+  }
+
+  .floating-nudge button {
+    min-height: 32px !important;
+    padding: 3px !important;
+    font-size: 13px !important;
+    border-radius: 9px !important;
+  }
+
+  .floating-nudge .nudge-step {
+    font-size: 11px !important;
+  }
+
+  .right-panel {
+    max-height: 20vh !important;
+    overflow: auto;
+  }
+
+  .layers-title {
+    padding: 10px 14px !important;
+    font-size: 16px !important;
+  }
+
+  .layers-hint {
+    padding: 0 14px 8px !important;
+    font-size: 11px !important;
+  }
+
+  .layer-item {
+    min-height: 40px !important;
+    padding: 6px 10px !important;
+    gap: 6px !important;
+  }
+
+  .layer-item button {
+    min-height: 32px !important;
+    padding: 4px 8px !important;
+  }
+
+  .layer-title,
+  .layer-name {
+    font-size: 13px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar-wrap {
+    padding: 7px;
+    gap: 7px;
+  }
+
+  .editor {
+    height: 84vh !important;
+    min-height: 650px !important;
+  }
+
+  .floating-zoom {
+    width: 52px !important;
+  }
+
+  .floating-zoom button {
+    min-height: 38px !important;
+    font-size: 12px !important;
+  }
+
+  .floating-nudge {
+    width: 88px !important;
+  }
+}
+
+
+/* v19 true mobile layout: compact top panel + full editing viewport */
+@media (max-width: 900px) {
+  html,
+  body,
+  #app {
+    height: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    overflow-y: auto;
+  }
+
+  .workspace {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .left-panel {
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    width: 100% !important;
+    max-height: 232px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    background: rgba(31, 41, 55, 0.98);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+  }
+
+  .toolbar-wrap {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 6px !important;
+    padding: 6px 8px !important;
+    align-items: center !important;
+  }
+
+  .version-badge {
+    display: none !important;
+  }
+
+  .quick-history-top,
+  .nudge-section,
+  .view-section,
+  .toolbar-wrap > .tool-section:not(.export-section):not(.nudge-section):not(.view-section) {
+    display: none !important;
+  }
+
+  .mobile-select-top {
+    grid-column: 1 / -1 !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+  }
+
+  .mobile-select-top button {
+    min-height: 36px !important;
+    padding: 6px 8px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+  }
+
+  .toolbar-wrap > input[type="file"] {
+    grid-column: 1 / 2 !important;
+    width: 100% !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    padding: 3px !important;
+    box-sizing: border-box !important;
+  }
+
+  #addBoxBtn {
+    grid-column: 2 / 3 !important;
+    min-height: 40px !important;
+    padding: 7px 8px !important;
+    font-size: 15px !important;
+    border-radius: 12px !important;
+  }
+
+  #distributeHBtn,
+  #distributeVBtn {
+    grid-column: span 1 !important;
+    min-height: 38px !important;
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+    line-height: 1.15 !important;
+    border-radius: 11px !important;
+  }
+
+  .export-section {
+    grid-column: 1 / -1 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+  }
+
+  .export-section > summary.tool-title {
+    padding: 9px 12px !important;
+    font-size: 15px !important;
+    line-height: 1.15 !important;
+  }
+
+  .export-section[open] {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .editor {
+    order: 2;
+    position: relative !important;
+    width: 100vw !important;
+    height: calc(100svh - 232px) !important;
+    min-height: 500px !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    flex: 0 0 auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    border-top: 1px solid rgba(255,255,255,0.14) !important;
+  }
+
+  canvas {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+
+  .floating-zoom {
+    position: absolute !important;
+    left: 6px !important;
+    top: 50% !important;
+    bottom: auto !important;
+    transform: translateY(-50%) !important;
+    width: 44px !important;
+    gap: 4px !important;
+    padding: 4px !important;
+    border-radius: 14px !important;
+    opacity: 0.92;
+  }
+
+  .floating-zoom button {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 3px 1px !important;
+    font-size: 10.5px !important;
+    line-height: 1.02 !important;
+    border-radius: 10px !important;
+  }
+
+  #floatUndoBtn,
+  #floatRedoBtn {
+    font-size: 9.5px !important;
+  }
+
+  .floating-nudge {
+    position: absolute !important;
+    right: 6px !important;
+    top: 8px !important;
+    width: 78px !important;
+    padding: 5px !important;
+    gap: 4px !important;
+    border-radius: 14px !important;
+    opacity: 0.92;
+  }
+
+  .floating-nudge .nudge-title {
+    font-size: 10px !important;
+    line-height: 1 !important;
+  }
+
+  .floating-nudge button {
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 2px !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+  }
+
+  .floating-nudge .nudge-step {
+    font-size: 10px !important;
+  }
+
+  .right-panel {
+    order: 3;
+    width: 100% !important;
+    max-height: 120px !important;
+    overflow-y: auto !important;
+    border-left: 0 !important;
+    border-top: 1px solid rgba(255,255,255,0.14) !important;
+  }
+
+  .layers-title {
+    padding: 8px 12px !important;
+    font-size: 15px !important;
+  }
+
+  .layers-hint {
+    display: none !important;
+  }
+
+  .layer-item {
+    min-height: 34px !important;
+    padding: 5px 8px !important;
+    gap: 5px !important;
+  }
+
+  .layer-item button {
+    min-height: 30px !important;
+    padding: 3px 7px !important;
+    font-size: 12px !important;
+  }
+
+  .layer-title,
+  .layer-name {
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-panel {
+    max-height: 214px !important;
+  }
+
+  .editor {
+    height: calc(100svh - 214px) !important;
+    min-height: 500px !important;
+  }
+
+  .toolbar-wrap {
+    padding: 5px 6px !important;
+    gap: 5px !important;
+  }
+
+  .mobile-select-top button,
+  #distributeHBtn,
+  #distributeVBtn {
+    min-height: 34px !important;
+    font-size: 11.5px !important;
+  }
+
+  #addBoxBtn {
+    min-height: 38px !important;
+    font-size: 14px !important;
+  }
+
+  .export-section > summary.tool-title {
+    padding: 8px 10px !important;
+    font-size: 14px !important;
+  }
+
+  .floating-zoom {
+    width: 42px !important;
+  }
+
+  .floating-zoom button {
+    min-height: 32px !important;
+    height: 32px !important;
+    font-size: 10px !important;
+  }
+
+  .floating-nudge {
+    width: 74px !important;
+  }
+
+  .floating-nudge button {
+    min-height: 26px !important;
+    height: 26px !important;
+  }
+}
+
+
+/* v20 mobile layout: horizontal canvas toolbar above image + nudge side-by-side */
+@media (max-width: 900px) {
+  .left-panel {
+    max-height: 218px !important;
+  }
+
+  .editor {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    grid-template-areas:
+      "zoom nudge"
+      "canvas canvas" !important;
+    gap: 6px !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    height: calc(100svh - 218px) !important;
+    min-height: 540px !important;
+    padding: 6px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .floating-zoom {
+    grid-area: zoom !important;
+    position: static !important;
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 5px !important;
+    margin: 0 !important;
+    border-radius: 14px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    opacity: 1 !important;
+  }
+
+  .floating-zoom::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .floating-zoom button {
+    flex: 0 0 auto !important;
+    min-width: 46px !important;
+    width: auto !important;
+    min-height: 38px !important;
+    height: 38px !important;
+    padding: 4px 8px !important;
+    border-radius: 11px !important;
+    font-size: 12px !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+  }
+
+  #floatFitViewBtn,
+  #floatPanModeBtn,
+  #floatMultiSelectBtn,
+  #floatScrollTopBtn {
+    min-width: 54px !important;
+  }
+
+  #floatUndoBtn,
+  #floatRedoBtn {
+    min-width: 50px !important;
+    font-size: 11px !important;
+  }
+
+  .floating-nudge {
+    grid-area: nudge !important;
+    position: static !important;
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    width: 122px !important;
+    height: auto !important;
+    display: grid !important;
+    grid-template-columns: 28px 34px 28px !important;
+    grid-template-rows: 14px 28px 28px !important;
+    grid-template-areas:
+      "title title title"
+      "left up right"
+      "down step step" !important;
+    align-self: stretch !important;
+    gap: 3px !important;
+    padding: 5px !important;
+    margin: 0 !important;
+    border-radius: 14px !important;
+    opacity: 1 !important;
+  }
+
+  .floating-nudge .nudge-title {
+    font-size: 10px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+  }
+
+  .floating-nudge button {
+    min-height: 28px !important;
+    height: 28px !important;
+    width: auto !important;
+    padding: 1px !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+  }
+
+  .floating-nudge .nudge-step {
+    font-size: 10px !important;
+  }
+
+  canvas {
+    grid-area: canvas !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    align-self: stretch !important;
+    justify-self: stretch !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-panel {
+    max-height: 206px !important;
+  }
+
+  .editor {
+    height: calc(100svh - 206px) !important;
+    min-height: 540px !important;
+    grid-template-columns: minmax(0, 1fr) 108px !important;
+    gap: 5px !important;
+    padding: 5px !important;
+  }
+
+  .floating-zoom {
+    gap: 4px !important;
+    padding: 4px !important;
+  }
+
+  .floating-zoom button {
+    min-width: 42px !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    padding: 3px 7px !important;
+    font-size: 11px !important;
+  }
+
+  #floatFitViewBtn,
+  #floatPanModeBtn,
+  #floatMultiSelectBtn,
+  #floatScrollTopBtn {
+    min-width: 48px !important;
+  }
+
+  #floatUndoBtn,
+  #floatRedoBtn {
+    min-width: 44px !important;
+    font-size: 10px !important;
+  }
+
+  .floating-nudge {
+    width: 108px !important;
+    grid-template-columns: 25px 30px 25px !important;
+    grid-template-rows: 13px 26px 26px !important;
+    gap: 3px !important;
+    padding: 4px !important;
+  }
+
+  .floating-nudge button {
+    min-height: 26px !important;
+    height: 26px !important;
+    font-size: 11px !important;
+  }
+}
+
+
+/* v21 mobile layout: show all canvas toolbar buttons without squeezing */
+@media (max-width: 900px) {
+  .editor {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+    grid-template-areas:
+      "zoom"
+      "nudge"
+      "canvas" !important;
+    gap: 5px !important;
+    padding: 5px !important;
+    height: calc(100svh - 218px) !important;
+    min-height: 540px !important;
+    box-sizing: border-box !important;
+  }
+
+  .floating-zoom {
+    grid-area: zoom !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: 34px 34px 43px 43px 43px 43px 43px 43px !important;
+    justify-content: space-between !important;
+    align-items: stretch !important;
+    gap: 3px !important;
+    overflow: visible !important;
+    padding: 4px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    border-radius: 13px !important;
+  }
+
+  .floating-zoom button,
+  #floatFitViewBtn,
+  #floatPanModeBtn,
+  #floatMultiSelectBtn,
+  #floatUndoBtn,
+  #floatRedoBtn,
+  #floatScrollTopBtn {
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 2px 2px !important;
+    border-radius: 10px !important;
+    font-size: 11px !important;
+    line-height: 1.05 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-align: center !important;
+  }
+
+  #floatZoomOutBtn,
+  #floatZoomInBtn {
+    font-size: 17px !important;
+  }
+
+  #floatUndoBtn,
+  #floatRedoBtn {
+    font-size: 10px !important;
+  }
+
+  .floating-nudge {
+    grid-area: nudge !important;
+    width: 100% !important;
+    max-width: none !important;
+    display: grid !important;
+    grid-template-columns: auto 38px 38px 38px 38px 58px !important;
+    grid-template-rows: 34px !important;
+    grid-template-areas: "title left up down right step" !important;
+    align-items: center !important;
+    justify-content: end !important;
+    gap: 4px !important;
+    padding: 4px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    border-radius: 13px !important;
+  }
+
+  .floating-nudge .nudge-title {
+    grid-area: title !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+    padding: 0 4px !important;
+  }
+
+  .floating-nudge button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 30px !important;
+    height: 30px !important;
+    padding: 1px !important;
+    border-radius: 9px !important;
+    font-size: 13px !important;
+  }
+
+  .floating-nudge .nudge-step {
+    font-size: 11px !important;
+  }
+
+  canvas {
+    grid-area: canvas !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .floating-zoom {
+    grid-template-columns: 30px 30px 39px 39px 39px 39px 39px 39px !important;
+    gap: 2px !important;
+    padding: 3px !important;
+  }
+
+  .floating-zoom button,
+  #floatFitViewBtn,
+  #floatPanModeBtn,
+  #floatMultiSelectBtn,
+  #floatUndoBtn,
+  #floatRedoBtn,
+  #floatScrollTopBtn {
+    height: 34px !important;
+    min-height: 34px !important;
+    font-size: 10px !important;
+    border-radius: 9px !important;
+  }
+
+  #floatZoomOutBtn,
+  #floatZoomInBtn {
+    font-size: 16px !important;
+  }
+
+  #floatUndoBtn,
+  #floatRedoBtn {
+    font-size: 9px !important;
+  }
+
+  .floating-nudge {
+    grid-template-columns: auto 34px 34px 34px 34px 50px !important;
+    gap: 3px !important;
+  }
+
+  .floating-nudge .nudge-title {
+    font-size: 10px !important;
+  }
+
+  .floating-nudge button {
+    min-height: 28px !important;
+    height: 28px !important;
+    font-size: 12px !important;
+  }
+}
+
+
+/* v23 long-press delete + multi-delete button */
+.danger-button,
+#deleteSelectedBtn {
+  background: #dc2626;
+  color: #fff;
+}
+
+.danger-button:hover,
+#deleteSelectedBtn:hover {
+  background: #ef4444;
+}
+
+.delete-selected-top {
+  grid-column: 1 / -1;
+  min-height: 42px;
+  font-weight: 900;
+}
+
+@media (max-width: 900px) {
+  .delete-selected-top {
+    min-height: 40px !important;
+    font-size: 14px !important;
+    border-radius: 12px !important;
+  }
+}
+
+
+/* v25 mobile fixes: export toggle, layers access, no-squeeze toolbar */
+.secondary-button,
+#scrollLayersBtn,
+#floatLayersBtn {
+  background: #475569;
+  color: #fff;
+}
+
+.scroll-layers-top {
+  grid-column: 1 / -1;
+  min-height: 40px;
+  font-weight: 900;
+}
+
+@media (max-width: 900px) {
+  .left-panel {
+    max-height: none !important;
+    overflow: visible !important;
+    position: relative !important;
+  }
+
+  .toolbar-wrap {
+    padding-bottom: 6px !important;
+  }
+
+  .export-section > summary.tool-title {
+    touch-action: manipulation !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+  }
+
+  .editor {
+    height: 64svh !important;
+    min-height: 420px !important;
+    max-height: 680px !important;
+  }
+
+  .floating-zoom {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .floating-zoom::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .floating-zoom button,
+  #floatFitViewBtn,
+  #floatPanModeBtn,
+  #floatMultiSelectBtn,
+  #floatUndoBtn,
+  #floatRedoBtn,
+  #floatScrollTopBtn,
+  #floatLayersBtn {
+    flex: 0 0 auto !important;
+    min-width: 52px !important;
+    width: auto !important;
+    padding-left: 7px !important;
+    padding-right: 7px !important;
+    white-space: nowrap !important;
+  }
+
+  .right-panel {
+    display: block !important;
+    position: relative !important;
+    max-height: 36vh !important;
+    min-height: 180px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  #layers {
+    min-height: 160px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .editor {
+    height: 62svh !important;
+    min-height: 400px !important;
+  }
+
+  .floating-zoom button,
+  #floatFitViewBtn,
+  #floatPanModeBtn,
+  #floatMultiSelectBtn,
+  #floatUndoBtn,
+  #floatRedoBtn,
+  #floatScrollTopBtn,
+  #floatLayersBtn {
+    min-width: 48px !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+}
