@@ -38,7 +38,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v29 已載入｜可拖曳切割線＋LINE 宮格模板</div>
+    <div class="version-badge">v30 已載入｜宮格單格編輯模式</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -61,7 +61,7 @@ export function initToolbar() {
 
     <div class="tool-section grid-section">
       <div class="tool-title">LINE 宮格模板 / 可拖曳切割線</div>
-      <div class="tool-note">一鍵產生 LINE 16 宮格、8 宮格、5×8 或自訂模板；建立後可直接拖曳青色切割線調整。</div>
+      <div class="tool-note">一鍵產生 LINE 16 宮格、8 宮格、5×8 或自訂模板；建立後只顯示青色切割線。點某一格才顯示該格裁切框，拖青色線可調整切割線。</div>
       <div class="grid-preset-buttons">
         <button id="gridLine16Btn" type="button">LINE 16 宮格</button>
         <button id="gridLine8Btn" type="button">LINE 8 宮格</button>
