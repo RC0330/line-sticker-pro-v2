@@ -1,4 +1,5 @@
 import { editorStore } from "../store/editorStore.js";
+import { autoDetectCropBoxesFromImage } from "../ai/detect.js";
 import { createCropBoxCentered, deleteSelectedBoxes, distributeSelected, draw, fitImageToView, resetView, setImageAndFit, setPanMode, togglePanMode, zoomIn, zoomOut } from "../core/canvas.js";
 import { EXPORT_PRESETS, exportSelectedPng, exportZip, previewCrop } from "../core/exporter.js";
 import { undo, redo, saveHistory } from "../core/history.js";
@@ -36,7 +37,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v26 已載入｜手機規格選單＋預覽加大</div>
+    <div class="version-badge">v27 已載入｜自動預測裁切框</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -54,6 +55,8 @@ export function initToolbar() {
     <input type="file" id="uploadInput" accept="image/*" />
 
     <button id="addBoxBtn">新增裁切框</button>
+    <button id="autoDetectBtn" class="secondary-button" type="button">自動預測裁切框</button>
+    <div class="tool-note auto-detect-note">上傳圖片後會先自動預測裁切框；你可再調整大小、移動或刪除誤判裁切框。</div>
 
     <div class="tool-section nudge-section">
       <div class="tool-title">裁切框微調</div>
@@ -120,6 +123,39 @@ export function initToolbar() {
 
   const uploadInput = document.getElementById("uploadInput");
 
+  async function runAutoDetectCropBoxes({ resetHistory = false } = {}) {
+    if (!editorStore.image) {
+      alert("請先上傳圖片");
+      return;
+    }
+
+    const previousBoxes = editorStore.boxes.map((box) => ({ ...box }));
+    const detectedBoxes = autoDetectCropBoxesFromImage(editorStore.image);
+
+    if (resetHistory) {
+      editorStore.history = [];
+      editorStore.historyIndex = -1;
+    } else if (editorStore.boxes.length) {
+      saveHistory();
+    }
+
+    editorStore.boxes = detectedBoxes;
+    editorStore.selected = detectedBoxes.length ? [0] : [];
+    editorStore.activeBox = detectedBoxes.length ? 0 : -1;
+
+    if (!detectedBoxes.length && !previousBoxes.length) {
+      editorStore.transformStatus = "未偵測到裁切框，請手動新增";
+    } else if (!detectedBoxes.length && previousBoxes.length) {
+      editorStore.transformStatus = "未偵測到裁切框，已清空舊裁切框，可手動新增";
+    } else {
+      editorStore.transformStatus = `已自動預測 ${detectedBoxes.length} 個裁切框`;
+    }
+
+    saveHistory();
+    renderLayers();
+    draw();
+  }
+
   uploadInput.addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -128,10 +164,11 @@ export function initToolbar() {
 
     reader.onload = async (ev) => {
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         setImageAndFit(img);
         setPanMode(false);
         syncPanButtons();
+        await runAutoDetectCropBoxes({ resetHistory: true });
       };
       img.src = ev.target.result;
     };
@@ -258,6 +295,7 @@ export function initToolbar() {
   bindPress("floatMultiSelectBtn", toggleMultiSelectMode);
   bindPress("selectAllBtn", selectAllBoxes);
   bindPress("deleteSelectedBtn", deleteSelectedAction);
+  bindPress("autoDetectBtn", () => runAutoDetectCropBoxes({ resetHistory: false }));
   syncMultiSelectButtons();
 
   bindPress("floatScrollTopBtn", () => {

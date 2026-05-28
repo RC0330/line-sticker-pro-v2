@@ -2267,3 +2267,13 @@ body.multi-select-mode canvas {
     max-height: 48svh !important;
   }
 }
+
+
+.auto-detect-note {
+  margin-top: -6px;
+  margin-bottom: 8px;
+}
+
+#autoDetectBtn.secondary-button {
+  margin-top: -4px;
+}
