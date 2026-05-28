@@ -69,5 +69,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v31-grid-cell-hit-first"
+  appVersion: "v32-grid-cell-select-delete-fix"
 };
