@@ -69,5 +69,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v29-draggable-grid-template"
+  appVersion: "v30-grid-single-cell-edit"
 };
