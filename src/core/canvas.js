@@ -229,6 +229,14 @@ function drawGridTemplateGuides() {
   const bottom = editorStore.image.height;
 
   ctx.save();
+  ctx.fillStyle = "rgba(15,23,42,0.78)";
+  ctx.fillRect(left + 10 / zoom, top + 10 / zoom, 218 / zoom, 30 / zoom);
+  ctx.fillStyle = "rgba(226,232,240,0.95)";
+  ctx.font = `${12 / zoom}px Arial`;
+  ctx.fillText("點單格可編輯；拖青色線可調整切割線", left + 18 / zoom, top + 30 / zoom);
+  ctx.restore();
+
+  ctx.save();
   ctx.strokeStyle = "rgba(34,211,238,0.95)";
   ctx.fillStyle = "rgba(34,211,238,0.95)";
   ctx.lineWidth = 2.5 / zoom;
@@ -477,11 +485,17 @@ export function draw() {
 
   drawGridTemplateGuides();
 
+  const isGridTemplateActive = !!editorStore.gridTemplate?.active;
+
   editorStore.boxes.forEach((box, index) => {
     if (box.visible === false) return;
 
     const selected = editorStore.selected.includes(index);
     const hover = editorStore.hoverBox === index;
+
+    // 宮格模板啟用時，隱藏未選取裁切框外框，避免每格框線和切割線重疊造成手機很難點選。
+    // 只保留青色可拖曳切割線；點到某一格後，才顯示該格的裁切框與控制點。
+    if (isGridTemplateActive && !selected && !hover) return;
 
     drawRotatedRect(box, selected, hover, index);
 
