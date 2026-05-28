@@ -61,5 +61,5 @@ export const editorStore = {
   bgTolerance: 34,
   bgFeather: 8,
 
-  appVersion: "v25-mobile-fixes"
+  appVersion: "v27-auto-detect-crops"
 };
