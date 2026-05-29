@@ -262,3 +262,47 @@ export function applyReferenceSizeToAll() {
   draw();
   return changed;
 }
+
+
+export function setLockedForTargets(locked = true) {
+  const targetIndices = editorStore.selected?.length ? getTargetIndices(true) : getTargetIndices(false);
+  if (!targetIndices.length) {
+    alert("請先建立或選取至少一個 Crop");
+    return 0;
+  }
+  saveHistory();
+  let changed = 0;
+  targetIndices.forEach((index) => {
+    const box = editorStore.boxes[index];
+    if (!box) return;
+    if (box.locked !== locked) changed += 1;
+    box.locked = locked;
+  });
+  if (locked) {
+    editorStore.selected = editorStore.selected.filter((index) => !targetIndices.includes(index));
+  } else {
+    editorStore.selected = [...new Set(targetIndices)];
+  }
+  editorStore.activeBox = editorStore.selected[0] ?? -1;
+  renderLayers();
+  draw();
+  return changed || targetIndices.length;
+}
+
+export function setOpacityForTargets(opacity = 1) {
+  const targetIndices = editorStore.selected?.length ? getTargetIndices(true) : getTargetIndices(false);
+  if (!targetIndices.length) {
+    alert("請先建立或選取至少一個 Crop");
+    return 0;
+  }
+  const value = Math.max(0, Math.min(1, Number(opacity) || 0));
+  saveHistory();
+  targetIndices.forEach((index) => {
+    const box = editorStore.boxes[index];
+    if (!box) return;
+    box.opacity = value;
+  });
+  renderLayers();
+  draw();
+  return targetIndices.length;
+}
