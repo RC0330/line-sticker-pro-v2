@@ -74,5 +74,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v46-all-buttons-multiselect-group-fix"
+  appVersion: "v47-sticker-wall-full-window"
 };
