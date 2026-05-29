@@ -69,5 +69,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v33-mouse-drag-fix"
+  appVersion: "v34-mobile-grid-visible"
 };
