@@ -74,5 +74,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v45-left-panel-preview-undo-fix"
+  appVersion: "v46-all-buttons-multiselect-group-fix"
 };
