@@ -39,7 +39,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v41 已載入｜多選/預覽/復原修正</div>
+    <div class="version-badge">v42 已載入｜多選/預覽/復原再修正</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -485,7 +485,6 @@ export function initToolbar() {
     const el = document.getElementById(id);
     if (!el) return;
     let lastRun = 0;
-    let pointerStarted = false;
     const run = async (e) => {
       const now = Date.now();
       if (now - lastRun < 180) {
@@ -504,24 +503,11 @@ export function initToolbar() {
       }
     };
 
-    el.addEventListener("pointerdown", (e) => {
-      pointerStarted = true;
-      e.preventDefault?.();
-      e.stopPropagation?.();
-    }, { passive: false });
-    el.addEventListener("pointerup", (e) => {
-      pointerStarted = false;
-      run(e);
-    }, { passive: false });
-    el.addEventListener("touchend", (e) => run(e), { passive: false });
-    el.addEventListener("click", (e) => {
-      if (pointerStarted) {
-        e.preventDefault?.();
-        e.stopPropagation?.();
-        pointerStarted = false;
-        return;
-      }
-      run(e);
+    el.addEventListener("click", run);
+    el.addEventListener("pointerup", run, { passive: false });
+    el.addEventListener("touchend", run, { passive: false });
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") run(e);
     });
   }
 
@@ -850,13 +836,15 @@ export function initToolbar() {
     exportSummary.addEventListener("click", toggleExportDetails);
   }
 
-  bindPress("previewCropBtn", () => {
+  function runPreviewCropAction() {
     syncExportOptions();
     previewCrop();
     const preview = document.getElementById("cropPreview");
     if (preview) preview.scrollIntoView({ behavior: "smooth", block: "nearest" });
     syncCropManageNote("已更新選取裁切預覽");
-  });
+  }
+
+  bindPress("previewCropBtn", runPreviewCropAction);
 
   bindPress("checkLineBtn", () => {
     syncExportOptions();
