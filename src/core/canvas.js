@@ -103,16 +103,21 @@ function drawHandle(h) {
   ctx.save();
   const z = editorStore.zoom || 1;
   const boxSize = 10 / z;
-  const rotateRadius = 7 / z;
+  const rotateRadius = 11 / z;
 
   if (h.isRotate) {
     ctx.beginPath();
     ctx.arc(h.x, h.y, rotateRadius, 0, Math.PI * 2);
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#00e5ff";
     ctx.fill();
-    ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 2 / z;
+    ctx.strokeStyle = "#083344";
+    ctx.lineWidth = 2.4 / z;
     ctx.stroke();
+    ctx.fillStyle = "#042f2e";
+    ctx.font = `${12 / z}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("↻", h.x, h.y + 0.2 / z);
   } else {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(h.x - boxSize / 2, h.y - boxSize / 2, boxSize, boxSize);
@@ -1079,6 +1084,60 @@ function hitTransformHandles(pos, target) {
     if (hitHandle(pos.x, pos.y, h, (h.isRotate ? 14 : 12) / (editorStore.zoom || 1))) return h;
   }
   return null;
+}
+
+export function rotateSelectedByDegrees(degrees = 15) {
+  const targets = editorStore.selected?.length
+    ? [...editorStore.selected]
+    : (Number.isInteger(editorStore.activeBox) && editorStore.activeBox >= 0 ? [editorStore.activeBox] : []);
+
+  const delta = (Number(degrees) || 0) * Math.PI / 180;
+  if (!targets.length) {
+    alert("請先選取至少一個裁切框");
+    return;
+  }
+
+  saveHistory();
+  let changed = 0;
+  targets.forEach((index) => {
+    const box = editorStore.boxes[index];
+    if (!box || box.locked) return;
+    box.rotation = normalizeAngle((box.rotation || 0) + delta);
+    changed += 1;
+  });
+
+  if (!changed) {
+    editorStore.transformStatus = "目前選取的裁切框已鎖定，無法旋轉";
+  } else {
+    editorStore.transformStatus = `已旋轉 ${changed} 個裁切框 ${degrees > 0 ? '順時針' : '逆時針'} ${Math.abs(Number(degrees) || 0)}°`;
+  }
+
+  renderLayers();
+  draw();
+}
+
+export function resetSelectedRotation() {
+  const targets = editorStore.selected?.length
+    ? [...editorStore.selected]
+    : (Number.isInteger(editorStore.activeBox) && editorStore.activeBox >= 0 ? [editorStore.activeBox] : []);
+
+  if (!targets.length) {
+    alert("請先選取至少一個裁切框");
+    return;
+  }
+
+  saveHistory();
+  let changed = 0;
+  targets.forEach((index) => {
+    const box = editorStore.boxes[index];
+    if (!box || box.locked) return;
+    box.rotation = 0;
+    changed += 1;
+  });
+
+  editorStore.transformStatus = changed ? `已將 ${changed} 個裁切框旋轉角度重設為 0°` : "目前選取的裁切框已鎖定，無法重設旋轉";
+  renderLayers();
+  draw();
 }
 
 function onWheel(e) {
