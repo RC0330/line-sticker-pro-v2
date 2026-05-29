@@ -485,9 +485,11 @@ export function initToolbar() {
     const el = document.getElementById(id);
     if (!el) return;
     let lastRun = 0;
+
     const run = async (e) => {
       const now = Date.now();
-      if (now - lastRun < 180) {
+      // pointerdown 已執行時，後續 click/touchend 會被忽略，避免重複觸發。
+      if (now - lastRun < 260) {
         e?.preventDefault?.();
         e?.stopPropagation?.();
         return;
@@ -503,13 +505,15 @@ export function initToolbar() {
       }
     };
 
+    // 用 pointerdown 立即觸發，解決 Safari / Chrome 上 click 被其他層吃掉的問題。
+    el.addEventListener("pointerdown", run, { passive: false });
     el.addEventListener("click", run);
-    el.addEventListener("pointerup", run, { passive: false });
     el.addEventListener("touchend", run, { passive: false });
     el.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") run(e);
     });
   }
+
 
   bindPress("zoomOutBtn", zoomOut);
   bindPress("zoomInBtn", zoomIn);
@@ -713,6 +717,8 @@ export function initToolbar() {
   bindPress("redoBtn", runRedo);
   bindPress("floatUndoBtn", runUndo);
   bindPress("floatRedoBtn", runRedo);
+  document.getElementById("undoBtn")?.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); runUndo(); }, { passive: false });
+  document.getElementById("redoBtn")?.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); runRedo(); }, { passive: false });
   bindPress("rotateLeftBtn", () => rotateSelectedByDegrees(-15));
   bindPress("rotateRightBtn", () => rotateSelectedByDegrees(15));
   bindPress("rotateResetBtn", () => resetSelectedRotation());
@@ -845,6 +851,11 @@ export function initToolbar() {
   }
 
   bindPress("previewCropBtn", runPreviewCropAction);
+  document.getElementById("previewCropBtn")?.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    runPreviewCropAction();
+  }, { passive: false });
 
   bindPress("checkLineBtn", () => {
     syncExportOptions();
