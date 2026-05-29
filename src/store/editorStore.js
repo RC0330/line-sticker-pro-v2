@@ -58,6 +58,10 @@ export const editorStore = {
     margin: 0,
     filenamePrefix: "sticker"
   },
+  previewWall: {
+    columns: 4,
+    rows: 4
+  },
 
   bgTolerance: 34,
   bgFeather: 8,
@@ -70,5 +74,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v39-batch-lock-opacity"
+  appVersion: "v40-sticker-wall-preview"
 };
