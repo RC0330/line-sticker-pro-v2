@@ -2,6 +2,10 @@ import { editorStore } from "../store/editorStore.js";
 import { draw } from "../core/canvas.js";
 import { saveHistory } from "../core/history.js";
 
+function emitLayerPanelChange() {
+  document.dispatchEvent(new CustomEvent("crop-ui-updated"));
+}
+
 function moveLayer(fromIndex, toIndex) {
   if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
 
@@ -48,12 +52,11 @@ export function renderLayers() {
   if (!panel) return;
 
   panel.innerHTML = `
-    <div class="layers-title">Layers</div>
-    <div class="layers-hint">可拖曳圖層排序；手機可開啟「多選」或按「全選裁切框」</div>
+    <div class="layers-title">Crops / Layers</div>
+    <div class="layers-hint">依 Crop 編號固定排序顯示。可在上方使用批次命名、全選/取消全選、複製、刪除空白等管理功能。</div>
   `;
 
-  [...editorStore.boxes].reverse().forEach((box, reverseIndex) => {
-    const realIndex = editorStore.boxes.length - 1 - reverseIndex;
+  editorStore.boxes.forEach((box, realIndex) => {
     const div = document.createElement("div");
     div.className = "layer-item";
     div.draggable = true;
@@ -90,6 +93,7 @@ export function renderLayers() {
       moveLayer(from, to);
       renderLayers();
       draw();
+      emitLayerPanelChange();
     });
 
     const handle = document.createElement("span");
@@ -97,7 +101,7 @@ export function renderLayers() {
     handle.textContent = "☰";
 
     const title = document.createElement("input");
-    title.value = box.name || `Layer ${realIndex}`;
+    title.value = box.name || `Crop ${realIndex + 1}`;
     title.className = "layer-title";
     title.draggable = false;
     title.oninput = () => {
@@ -116,6 +120,7 @@ export function renderLayers() {
       box.visible = !box.visible;
       renderLayers();
       draw();
+      emitLayerPanelChange();
     });
 
     const lock = document.createElement("button");
@@ -140,6 +145,7 @@ export function renderLayers() {
 
       renderLayers();
       draw();
+      emitLayerPanelChange();
     });
 
     const opacity = document.createElement("input");
@@ -166,9 +172,11 @@ export function renderLayers() {
       } else {
         editorStore.selected = [realIndex];
       }
+      editorStore.activeBox = editorStore.selected[0] ?? -1;
 
       renderLayers();
       draw();
+      emitLayerPanelChange();
     };
 
     div.appendChild(handle);

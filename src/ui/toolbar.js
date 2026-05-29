@@ -3,6 +3,7 @@ import { autoDetectCropBoxesFromImage } from "../ai/detect.js";
 import { createCropBoxCentered, deleteSelectedBoxes, distributeSelected, draw, fitImageToView, replaceBoxes, resetSelectedRotation, resetView, rotateSelectedByDegrees, setEditableGridTemplate, setImageAndFit, setPanMode, togglePanMode, zoomIn, zoomOut } from "../core/canvas.js";
 import { snapBoxesToContent } from "../ai/grid-snap.js";
 import { EXPORT_PRESETS, exportSelectedPng, exportZip, previewCrop, renderLineExportReport } from "../core/exporter.js";
+import { applyReferenceSizeToAll, batchRenameCrops, deleteEmptyCrops, duplicateSelectedCrops, sortCropsByNumber, toggleSelectAllCrops } from "../core/crop-manager.js";
 import { undo, redo, saveHistory } from "../core/history.js";
 import { renderLayers } from "./layer-panel.js";
 
@@ -38,7 +39,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v37 已載入｜LINE 匯出檢查＋自動命名</div>
+    <div class="version-badge">v38 已載入｜Crop 清單管理強化</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -47,7 +48,7 @@ export function initToolbar() {
 
     <div class="quick-history-buttons mobile-select-top">
       <button id="multiSelectBtn" type="button">多選模式：關</button>
-      <button id="selectAllBtn" type="button">全選裁切框</button>
+      <button id="selectAllBtn" type="button">全選 / 取消全選</button>
     </div>
 
     <button id="deleteSelectedBtn" class="danger-button delete-selected-top" type="button">刪除已選裁切框</button>
@@ -58,6 +59,23 @@ export function initToolbar() {
     <button id="addBoxBtn">新增裁切框</button>
     <button id="autoDetectBtn" class="secondary-button" type="button">自動預測裁切框</button>
     <div class="tool-note auto-detect-note">上傳圖片後會先自動預測裁切框；若預測不準，可直接使用下方 4×4 / 5×8 平均切格，或自行設定縱向／橫向切割線數量。</div>
+
+    <div class="tool-section crop-manage-section">
+      <div class="tool-title">Crop 清單管理強化</div>
+      <div class="tool-note">支援編號固定排序、批次重新命名、全選/取消全選、刪除空白 Crop、複製 Crop、一鍵套用同尺寸。</div>
+      <div class="crop-manage-grid">
+        <button id="sortCropsBtn" type="button">Crop 編號固定排序</button>
+        <button id="duplicateCropBtn" type="button">一鍵複製 Crop</button>
+        <button id="deleteEmptyBtn" class="secondary-button" type="button">一鍵刪除空白 Crop</button>
+        <button id="applySizeToAllBtn" class="secondary-button" type="button">套用同尺寸到全部 Crop</button>
+      </div>
+      <label class="tool-label">批次重新命名前綴（有選取時只改選取 Crop，未選取則改全部）</label>
+      <div class="crop-rename-row">
+        <input id="batchRenamePrefix" class="text-input" type="text" value="Crop" maxlength="40" placeholder="例如：貼圖" />
+        <button id="batchRenameBtn" type="button">批次重新命名</button>
+      </div>
+      <div id="cropManageNote" class="tool-note"></div>
+    </div>
 
     <div class="tool-section grid-section">
       <div class="tool-title">LINE 宮格模板 / 可拖曳切割線</div>
@@ -357,6 +375,25 @@ export function initToolbar() {
     syncMultiSelectButtons();
     draw();
   }
+  function syncSelectAllButton() {
+    const button = document.getElementById("selectAllBtn");
+    if (!button) return;
+    const selectable = editorStore.boxes
+      .map((box, index) => (box && box.visible !== false ? index : null))
+      .filter((index) => index !== null);
+    const allSelected = selectable.length > 0 && selectable.every((index) => editorStore.selected.includes(index));
+    button.textContent = allSelected ? "取消全選" : "全選裁切框";
+    button.classList.toggle("active", allSelected);
+  }
+
+  function syncCropManageNote(message = "") {
+    const note = document.getElementById("cropManageNote");
+    if (!note) return;
+    const selectedCount = editorStore.selected?.length || 0;
+    const totalCount = editorStore.boxes?.length || 0;
+    note.textContent = message || `目前共有 ${totalCount} 個 Crop，已選取 ${selectedCount} 個。`;
+  }
+
 
   function deleteSelectedAction() {
     if (!editorStore.selected.length) {
@@ -364,14 +401,14 @@ export function initToolbar() {
       return;
     }
     deleteSelectedBoxes();
+    syncSelectAllButton();
+    syncCropManageNote("已刪除選取的 Crop");
   }
 
   function selectAllBoxes() {
-    editorStore.selected = editorStore.boxes
-      .map((box, index) => (box && box.visible !== false && box.locked !== true ? index : null))
-      .filter((index) => index !== null);
-    renderLayers();
-    draw();
+    const selectedAll = toggleSelectAllCrops();
+    syncSelectAllButton();
+    syncCropManageNote(selectedAll ? "已全選所有可見 Crop" : "已取消全選");
   }
 
   function scrollToLayers() {
@@ -438,6 +475,32 @@ export function initToolbar() {
   bindPress("floatMultiSelectBtn", toggleMultiSelectMode);
   bindPress("selectAllBtn", selectAllBoxes);
   bindPress("deleteSelectedBtn", deleteSelectedAction);
+  bindPress("sortCropsBtn", () => {
+    sortCropsByNumber();
+    syncSelectAllButton();
+    syncCropManageNote("已依 Crop 編號固定排序，並重新整理編號");
+  });
+  bindPress("duplicateCropBtn", () => {
+    const count = duplicateSelectedCrops();
+    syncSelectAllButton();
+    syncCropManageNote(count ? `已複製 ${count} 個 Crop` : "未複製任何 Crop");
+  });
+  bindPress("deleteEmptyBtn", () => {
+    const count = deleteEmptyCrops();
+    syncSelectAllButton();
+    syncCropManageNote(count ? `已刪除 ${count} 個空白 Crop` : "未偵測到空白 Crop");
+  });
+  bindPress("applySizeToAllBtn", () => {
+    const count = applyReferenceSizeToAll();
+    syncSelectAllButton();
+    syncCropManageNote(count ? `已將基準 Crop 的尺寸套用到其他 ${count} 個 Crop` : "沒有可套用的 Crop");
+  });
+  bindPress("batchRenameBtn", () => {
+    const prefix = document.getElementById("batchRenamePrefix")?.value || "Crop";
+    const count = editorStore.selected?.length ? batchRenameCrops(prefix) : (batchRenameCrops(prefix) || 0);
+    syncSelectAllButton();
+    syncCropManageNote(count ? `已將 ${count} 個 Crop 批次重新命名為 ${prefix} 01、${prefix} 02 ...` : "沒有可重新命名的 Crop");
+  });
   bindPress("autoDetectBtn", () => runAutoDetectCropBoxes({ resetHistory: false }));
   bindPress("gridLine16Btn", () => generatePresetGrid(4, 4, "LINE 16 宮格 4×4"));
   bindPress("gridLine8Btn", () => generatePresetGrid(4, 2, "LINE 8 宮格 4×2"));
@@ -454,6 +517,12 @@ export function initToolbar() {
   });
   syncGridResultNote();
   syncMultiSelectButtons();
+  syncSelectAllButton();
+  syncCropManageNote();
+  document.addEventListener("crop-ui-updated", () => {
+    syncSelectAllButton();
+    syncCropManageNote();
+  });
 
   bindPress("floatScrollTopBtn", () => {
     document.querySelector(".left-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -568,6 +637,8 @@ export function initToolbar() {
   bindPress("addBoxBtn", () => {
     createCropBoxCentered();
     syncPanButtons();
+    syncSelectAllButton();
+    syncCropManageNote("已新增 1 個 Crop");
   });
 
   bindPress("distributeHBtn", () => {
