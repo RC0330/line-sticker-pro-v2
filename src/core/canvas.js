@@ -782,6 +782,7 @@ export function deleteBoxAt(index) {
   }
 
   editorStore.boxes.splice(index, 1);
+  renumberDefaultCropNames();
   editorStore.selected = editorStore.selected
     .filter((i) => i !== index)
     .map((i) => (i > index ? i - 1 : i));
@@ -808,6 +809,7 @@ export function deleteSelectedBoxes() {
 
   const selectedSet = new Set(editorStore.selected);
   editorStore.boxes = editorStore.boxes.filter((_, index) => !selectedSet.has(index));
+  renumberDefaultCropNames();
   editorStore.selected = [];
   editorStore.activeBox = -1;
   editorStore.deleteButtonBox = -1;
@@ -1701,6 +1703,7 @@ export function createCropBoxCentered() {
   };
 
   editorStore.boxes.push(box);
+  renumberDefaultCropNames();
   editorStore.selected = [editorStore.boxes.length - 1];
   editorStore.activeBox = editorStore.boxes.length - 1;
   editorStore.transformStatus = "已新增裁切框";
