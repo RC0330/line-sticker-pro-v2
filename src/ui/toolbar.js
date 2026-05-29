@@ -39,7 +39,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v45 已載入｜左側加寬＋按鈕事件修正</div>
+    <div class="version-badge">v46 已載入｜全功能鍵修正＋多選群組移動縮放</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -207,6 +207,20 @@ export function initToolbar() {
   `;
 
   const uploadInput = document.getElementById("uploadInput");
+  const removeBgCheck = document.getElementById("removeBgCheck");
+  const tolerance = document.getElementById("bgTolerance");
+  const feather = document.getElementById("bgFeather");
+  const preset = document.getElementById("exportPreset");
+  const presetButtons = Array.from(document.querySelectorAll(".preset-choice"));
+  const presetNote = document.getElementById("presetNote");
+  const filenamePrefix = document.getElementById("filenamePrefix");
+  const fileNamingNote = document.getElementById("fileNamingNote");
+  const batchOpacityRange = document.getElementById("batchOpacityRange");
+  const batchOpacityLabel = document.getElementById("batchOpacityLabel");
+  const wallColumnsInput = document.getElementById("wallColumnsInput");
+  const wallRowsInput = document.getElementById("wallRowsInput");
+  const tolLabel = document.getElementById("tolLabel");
+  const featherLabel = document.getElementById("featherLabel");
 
   function clampNumber(value, min, max) {
     return Math.max(min, Math.min(max, Number.isFinite(value) ? value : min));
@@ -484,16 +498,7 @@ export function initToolbar() {
   function bindPress(id, action) {
     const el = document.getElementById(id);
     if (!el) return;
-    let lastRun = 0;
-
     const run = async (e) => {
-      const now = Date.now();
-      if (now - lastRun < 180) {
-        e?.preventDefault?.();
-        e?.stopPropagation?.();
-        return;
-      }
-      lastRun = now;
       e?.preventDefault?.();
       e?.stopPropagation?.();
       try {
@@ -503,46 +508,21 @@ export function initToolbar() {
         alert(error?.message || "操作失敗，請重新試一次");
       }
     };
-
-    // v45: 改用 click / pointerup / touchend，避免 pointerdown 太早觸發後被其他層判定為拖曳或吞掉。
-    el.onclick = run;
-    el.addEventListener("pointerup", run, { passive: false });
-    el.addEventListener("touchend", run, { passive: false });
-    el.addEventListener("mousedown", (e) => {
-      // 保留滑鼠按下時不讓事件往畫布傳遞，但不在 mousedown 執行主要動作。
-      e.preventDefault?.();
-      e.stopPropagation?.();
-    }, { passive: false });
+    el.addEventListener("click", run);
     el.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") run(e);
+    });
+    ["pointerdown", "mousedown", "touchstart"].forEach((eventName) => {
+      el.addEventListener(eventName, (e) => {
+        e.stopPropagation?.();
+      }, { passive: true });
     });
   }
 
   function bindCriticalButton(id, action) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    let lastRun = 0;
-    const run = async (e) => {
-      const now = Date.now();
-      if (now - lastRun < 160) {
-        e?.preventDefault?.();
-        e?.stopPropagation?.();
-        return;
-      }
-      lastRun = now;
-      e?.preventDefault?.();
-      e?.stopPropagation?.();
-      await action(e);
-    };
-    el.onclick = run;
-    el.onpointerup = run;
-    el.ontouchend = run;
-    el.onmousedown = (e) => {
-      e.preventDefault?.();
-      e.stopPropagation?.();
-    };
+    // v46: critical buttons use the same simple click path; previous pointerup/touchend path could be blocked by TDZ init errors or duplicate debounce.
+    bindPress(id, action);
   }
-
 
   bindPress("zoomOutBtn", zoomOut);
   bindPress("zoomInBtn", zoomIn);
@@ -777,29 +757,15 @@ export function initToolbar() {
     distributeSelected("vertical");
   });
 
-  const removeBgCheck = document.getElementById("removeBgCheck");
-  const tolerance = document.getElementById("bgTolerance");
-  const feather = document.getElementById("bgFeather");
-  const preset = document.getElementById("exportPreset");
-  const presetButtons = Array.from(document.querySelectorAll(".preset-choice"));
-  const presetNote = document.getElementById("presetNote");
-  const filenamePrefix = document.getElementById("filenamePrefix");
-  const fileNamingNote = document.getElementById("fileNamingNote");
-  const batchOpacityRange = document.getElementById("batchOpacityRange");
-  const batchOpacityLabel = document.getElementById("batchOpacityLabel");
-  const wallColumnsInput = document.getElementById("wallColumnsInput");
-  const wallRowsInput = document.getElementById("wallRowsInput");
-  const tolLabel = document.getElementById("tolLabel");
-  const featherLabel = document.getElementById("featherLabel");
 
   function syncExportOptions() {
-    const presetKey = preset.value || "scale1";
+    const presetKey = preset?.value || "scale1";
     const presetDef = EXPORT_PRESETS[presetKey] || EXPORT_PRESETS.scale1;
     const prefix = String(filenamePrefix?.value || "sticker").trim() || "sticker";
     editorStore.exportOptions = {
-      removeBackground: removeBgCheck.checked,
-      tolerance: Number(tolerance.value),
-      feather: Number(feather.value),
+      removeBackground: removeBgCheck?.checked ?? true,
+      tolerance: Number(tolerance?.value ?? 34),
+      feather: Number(feather?.value ?? 8),
       preset: presetKey,
       scale: presetDef?.scale || 1,
       margin: presetKey === "lineSticker" ? 10 : 0,
@@ -808,17 +774,17 @@ export function initToolbar() {
     presetButtons.forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.preset === presetKey);
     });
-    editorStore.bgTolerance = Number(tolerance.value);
-    editorStore.bgFeather = Number(feather.value);
-    tolLabel.textContent = tolerance.value;
-    featherLabel.textContent = feather.value;
-    const selectedPreset = EXPORT_PRESETS[preset.value] || EXPORT_PRESETS.scale1;
+    editorStore.bgTolerance = Number(tolerance?.value ?? 34);
+    editorStore.bgFeather = Number(feather?.value ?? 8);
+    if (tolLabel) tolLabel.textContent = tolerance?.value ?? "34";
+    if (featherLabel) featherLabel.textContent = feather?.value ?? "8";
+    const selectedPreset = EXPORT_PRESETS[preset?.value] || EXPORT_PRESETS.scale1;
     if (selectedPreset?.type === "fit") {
-      presetNote.textContent = `${selectedPreset.label}：等比例縮放放入透明畫布，保留完整內容。`;
+      if (presetNote) presetNote.textContent = `${selectedPreset.label}：等比例縮放放入透明畫布，保留完整內容。`;
     } else if (selectedPreset?.type === "cover") {
-      presetNote.textContent = `${selectedPreset.label}：固定尺寸輸出，畫面置中填滿，可能裁掉邊緣。`;
+      if (presetNote) presetNote.textContent = `${selectedPreset.label}：固定尺寸輸出，畫面置中填滿，可能裁掉邊緣。`;
     } else {
-      presetNote.textContent = `${selectedPreset.label}：依裁切框尺寸乘倍率輸出。`;
+      if (presetNote) presetNote.textContent = `${selectedPreset.label}：依裁切框尺寸乘倍率輸出。`;
     }
     if (fileNamingNote) {
       fileNamingNote.textContent = `自動命名預覽：${prefix}_01.png、${prefix}_02.png、${prefix}_03.png …`;
@@ -829,20 +795,20 @@ export function initToolbar() {
     btn.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      preset.value = btn.dataset.preset;
+      if (preset) preset.value = btn.dataset.preset;
       syncExportOptions();
     }, { passive: false });
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      preset.value = btn.dataset.preset;
+      if (preset) preset.value = btn.dataset.preset;
       syncExportOptions();
     });
   });
 
   [removeBgCheck, tolerance, feather, preset, filenamePrefix].forEach((el) => {
-    el.addEventListener("input", syncExportOptions);
-    el.addEventListener("change", syncExportOptions);
+    el?.addEventListener("input", syncExportOptions);
+    el?.addEventListener("change", syncExportOptions);
   });
   syncExportOptions();
 
