@@ -38,7 +38,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v32 已載入｜宮格單格點選修正</div>
+    <div class="version-badge">v34 已載入｜手機顯示宮格模式</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>

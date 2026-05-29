@@ -1221,7 +1221,7 @@ body.multi-select-mode canvas {
   .quick-history-top,
   .nudge-section,
   .view-section,
-  .toolbar-wrap > .tool-section:not(.export-section):not(.nudge-section):not(.view-section) {
+  .toolbar-wrap > .tool-section:not(.export-section):not(.nudge-section):not(.view-section):not(.grid-section) {
     display: none !important;
   }
 
@@ -1456,7 +1456,7 @@ body.multi-select-mode canvas {
   .quick-history-top,
   .nudge-section,
   .view-section,
-  .toolbar-wrap > .tool-section:not(.export-section):not(.nudge-section):not(.view-section) {
+  .toolbar-wrap > .tool-section:not(.export-section):not(.nudge-section):not(.view-section):not(.grid-section) {
     display: none !important;
   }
 
@@ -2317,5 +2317,65 @@ body.multi-select-mode canvas {
   .grid-preset-buttons,
   .grid-inputs {
     grid-template-columns: 1fr;
+  }
+}
+
+
+/* v34 mobile fix: show grid/template controls on phones */
+@media (max-width: 900px) {
+  .toolbar-wrap > .grid-section,
+  .grid-section {
+    display: block !important;
+    grid-column: 1 / -1 !important;
+    padding: 10px !important;
+    border: 1px solid rgba(34,211,238,0.35) !important;
+    background: rgba(8, 47, 73, 0.45) !important;
+  }
+
+  .grid-section .tool-title {
+    font-size: 15px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .grid-section .tool-note {
+    display: block !important;
+    font-size: 12px !important;
+  }
+
+  .grid-preset-buttons,
+  .grid-inputs {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    margin-top: 8px !important;
+  }
+
+  .grid-preset-buttons button,
+  .grid-section button {
+    min-height: 38px !important;
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+    border-radius: 10px !important;
+  }
+
+  .grid-input-field span {
+    font-size: 12px !important;
+  }
+
+  .grid-input-field input {
+    min-height: 38px !important;
+    padding: 6px 8px !important;
+    font-size: 15px !important;
+  }
+
+  #gridResultNote {
+    margin: 8px 0 !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .grid-preset-buttons,
+  .grid-inputs {
+    grid-template-columns: 1fr !important;
   }
 }
