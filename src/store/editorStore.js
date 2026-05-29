@@ -69,5 +69,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v34-mobile-grid-visible"
+  appVersion: "v36-rotate-restore"
 };
