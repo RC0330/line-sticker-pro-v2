@@ -468,6 +468,72 @@ export function renderLineExportReport(onlySelected = false) {
   return report;
 }
 
+
+export function renderStickerWallPreview(columns = 4, rows = 4) {
+  const wall = document.getElementById("stickerWallPreview");
+  const meta = document.getElementById("stickerWallMeta");
+  if (!wall) return null;
+
+  const cols = Math.max(1, Math.min(12, Number(columns) || 4));
+  const rowCount = Math.max(1, Math.min(20, Number(rows) || 4));
+  const capacity = cols * rowCount;
+  const items = getExportBoxes(false);
+
+  wall.innerHTML = "";
+  wall.style.setProperty("--wall-columns", String(cols));
+
+  if (!editorStore.image) {
+    wall.innerHTML = `<div class="preview-empty">請先上傳圖片，才能預覽 LINE 貼圖牆。</div>`;
+    if (meta) meta.textContent = "尚未上傳圖片";
+    return null;
+  }
+
+  if (!items.length) {
+    wall.innerHTML = `<div class="preview-empty">目前沒有可預覽的 Crop。</div>`;
+    if (meta) meta.textContent = "目前沒有 Crop";
+    return null;
+  }
+
+  const shownCount = Math.min(capacity, items.length);
+  for (let i = 0; i < capacity; i += 1) {
+    const cell = document.createElement("div");
+    cell.className = "sticker-wall-cell";
+
+    if (i < items.length) {
+      const { box } = items[i];
+      const canvas = drawCropToCanvas(box, editorStore.exportOptions || {});
+      const img = document.createElement("img");
+      img.src = canvas.toDataURL("image/png");
+      img.alt = box.name || `Crop ${i + 1}`;
+      img.loading = "lazy";
+
+      const name = document.createElement("div");
+      name.className = "sticker-wall-name";
+      name.textContent = buildExportFilename(i + 1, items.length, editorStore.exportOptions || {});
+
+      const cropName = document.createElement("div");
+      cropName.className = "sticker-wall-cropname";
+      cropName.textContent = box.name || `Crop ${i + 1}`;
+
+      cell.appendChild(img);
+      cell.appendChild(name);
+      cell.appendChild(cropName);
+    } else {
+      cell.classList.add("empty");
+      cell.innerHTML = `<div class="sticker-wall-empty">空白格</div>`;
+    }
+
+    wall.appendChild(cell);
+  }
+
+  if (meta) {
+    const extra = items.length > capacity ? `，其餘 ${items.length - capacity} 個 Crop 尚未顯示` : "";
+    meta.textContent = `貼圖牆預覽：${cols}×${rowCount}（共 ${capacity} 格），目前顯示 ${shownCount} / ${items.length} 個 Crop${extra}。`;
+  }
+
+  return { columns: cols, rows: rowCount, capacity, total: items.length, shown: shownCount };
+}
+
 export async function exportSelectedPng() {
   const items = getExportBoxes(true);
   if (!editorStore.image) return alert("請先上傳圖片");
