@@ -2541,3 +2541,33 @@ body.multi-select-mode canvas {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* v39 batch lock/unlock + batch opacity */
+.crop-opacity-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.crop-opacity-row input[type="range"] {
+  width: 100%;
+}
+
+#batchOpacityLabel {
+  min-width: 56px;
+  text-align: center;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+
+@media (max-width: 900px) {
+  .crop-opacity-row {
+    grid-template-columns: 1fr;
+  }
+
+  #batchOpacityLabel {
+    text-align: left;
+  }
+}

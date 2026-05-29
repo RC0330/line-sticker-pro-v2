@@ -3,7 +3,7 @@ import { autoDetectCropBoxesFromImage } from "../ai/detect.js";
 import { createCropBoxCentered, deleteSelectedBoxes, distributeSelected, draw, fitImageToView, replaceBoxes, resetSelectedRotation, resetView, rotateSelectedByDegrees, setEditableGridTemplate, setImageAndFit, setPanMode, togglePanMode, zoomIn, zoomOut } from "../core/canvas.js";
 import { snapBoxesToContent } from "../ai/grid-snap.js";
 import { EXPORT_PRESETS, exportSelectedPng, exportZip, previewCrop, renderLineExportReport } from "../core/exporter.js";
-import { applyReferenceSizeToAll, batchRenameCrops, deleteEmptyCrops, duplicateSelectedCrops, sortCropsByNumber, toggleSelectAllCrops } from "../core/crop-manager.js";
+import { applyReferenceSizeToAll, batchRenameCrops, deleteEmptyCrops, duplicateSelectedCrops, setLockedForTargets, setOpacityForTargets, sortCropsByNumber, toggleSelectAllCrops } from "../core/crop-manager.js";
 import { undo, redo, saveHistory } from "../core/history.js";
 import { renderLayers } from "./layer-panel.js";
 
@@ -39,7 +39,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v38 已載入｜Crop 清單管理強化</div>
+    <div class="version-badge">v39 已載入｜批次鎖定 / 解鎖 ＋ 批次透明度</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -62,17 +62,25 @@ export function initToolbar() {
 
     <div class="tool-section crop-manage-section">
       <div class="tool-title">Crop 清單管理強化</div>
-      <div class="tool-note">支援編號固定排序、批次重新命名、全選/取消全選、刪除空白 Crop、複製 Crop、一鍵套用同尺寸。</div>
+      <div class="tool-note">支援編號固定排序、批次重新命名、全選/取消全選、刪除空白 Crop、複製 Crop、一鍵套用同尺寸，並新增批次鎖定/解鎖與批次透明度。</div>
       <div class="crop-manage-grid">
         <button id="sortCropsBtn" type="button">Crop 編號固定排序</button>
         <button id="duplicateCropBtn" type="button">一鍵複製 Crop</button>
         <button id="deleteEmptyBtn" class="secondary-button" type="button">一鍵刪除空白 Crop</button>
         <button id="applySizeToAllBtn" class="secondary-button" type="button">套用同尺寸到全部 Crop</button>
+        <button id="lockSelectedBtn" type="button">批次鎖定 Crop</button>
+        <button id="unlockSelectedBtn" class="secondary-button" type="button">批次解鎖 Crop</button>
       </div>
       <label class="tool-label">批次重新命名前綴（有選取時只改選取 Crop，未選取則改全部）</label>
       <div class="crop-rename-row">
         <input id="batchRenamePrefix" class="text-input" type="text" value="Crop" maxlength="40" placeholder="例如：貼圖" />
         <button id="batchRenameBtn" type="button">批次重新命名</button>
+      </div>
+      <label class="tool-label">批次調整透明度（有選取時只改選取 Crop，未選取則改全部）</label>
+      <div class="crop-opacity-row">
+        <input id="batchOpacityRange" type="range" min="0" max="100" value="100" />
+        <span id="batchOpacityLabel">100%</span>
+        <button id="applyOpacityBtn" type="button">套用透明度</button>
       </div>
       <div id="cropManageNote" class="tool-note"></div>
     </div>
@@ -394,6 +402,11 @@ export function initToolbar() {
     note.textContent = message || `目前共有 ${totalCount} 個 Crop，已選取 ${selectedCount} 個。`;
   }
 
+  function syncBatchOpacityLabel() {
+    if (!batchOpacityRange || !batchOpacityLabel) return;
+    batchOpacityLabel.textContent = `${batchOpacityRange.value}%`;
+  }
+
 
   function deleteSelectedAction() {
     if (!editorStore.selected.length) {
@@ -495,6 +508,22 @@ export function initToolbar() {
     syncSelectAllButton();
     syncCropManageNote(count ? `已將基準 Crop 的尺寸套用到其他 ${count} 個 Crop` : "沒有可套用的 Crop");
   });
+  bindPress("lockSelectedBtn", () => {
+    const count = setLockedForTargets(true);
+    syncSelectAllButton();
+    syncCropManageNote(count ? `已批次鎖定 ${count} 個 Crop` : "沒有可鎖定的 Crop");
+  });
+  bindPress("unlockSelectedBtn", () => {
+    const count = setLockedForTargets(false);
+    syncSelectAllButton();
+    syncCropManageNote(count ? `已批次解鎖 ${count} 個 Crop` : "沒有可解鎖的 Crop");
+  });
+  bindPress("applyOpacityBtn", () => {
+    const value = Number(batchOpacityRange?.value || 100) / 100;
+    const count = setOpacityForTargets(value);
+    syncSelectAllButton();
+    syncCropManageNote(count ? `已將 ${count} 個 Crop 的透明度調整為 ${Math.round(value * 100)}%` : "沒有可調整透明度的 Crop");
+  });
   bindPress("batchRenameBtn", () => {
     const prefix = document.getElementById("batchRenamePrefix")?.value || "Crop";
     const count = editorStore.selected?.length ? batchRenameCrops(prefix) : (batchRenameCrops(prefix) || 0);
@@ -519,6 +548,8 @@ export function initToolbar() {
   syncMultiSelectButtons();
   syncSelectAllButton();
   syncCropManageNote();
+  syncBatchOpacityLabel();
+  batchOpacityRange?.addEventListener("input", syncBatchOpacityLabel);
   document.addEventListener("crop-ui-updated", () => {
     syncSelectAllButton();
     syncCropManageNote();
@@ -657,6 +688,8 @@ export function initToolbar() {
   const presetNote = document.getElementById("presetNote");
   const filenamePrefix = document.getElementById("filenamePrefix");
   const fileNamingNote = document.getElementById("fileNamingNote");
+  const batchOpacityRange = document.getElementById("batchOpacityRange");
+  const batchOpacityLabel = document.getElementById("batchOpacityLabel");
   const tolLabel = document.getElementById("tolLabel");
   const featherLabel = document.getElementById("featherLabel");
 
