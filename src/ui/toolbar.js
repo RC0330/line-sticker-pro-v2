@@ -1,6 +1,6 @@
 import { editorStore } from "../store/editorStore.js";
 import { autoDetectCropBoxesFromImage } from "../ai/detect.js";
-import { createCropBoxCentered, deleteSelectedBoxes, distributeSelected, draw, fitImageToView, replaceBoxes, resetView, setEditableGridTemplate, setImageAndFit, setPanMode, togglePanMode, zoomIn, zoomOut } from "../core/canvas.js";
+import { createCropBoxCentered, deleteSelectedBoxes, distributeSelected, draw, fitImageToView, replaceBoxes, resetSelectedRotation, resetView, rotateSelectedByDegrees, setEditableGridTemplate, setImageAndFit, setPanMode, togglePanMode, zoomIn, zoomOut } from "../core/canvas.js";
 import { snapBoxesToContent } from "../ai/grid-snap.js";
 import { EXPORT_PRESETS, exportSelectedPng, exportZip, previewCrop } from "../core/exporter.js";
 import { undo, redo, saveHistory } from "../core/history.js";
@@ -38,7 +38,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v34 已載入｜手機顯示宮格模式</div>
+    <div class="version-badge">v36 已載入｜裁切框旋轉功能恢復</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -107,10 +107,15 @@ export function initToolbar() {
       <button id="panModeBtn" type="button">開啟拖動畫布模式</button>
     </div>
 
-    <div class="tool-section">
-      <div class="tool-title">Transform UI</div>
-      <div class="tool-note">拖白點縮放、拖圓點旋轉</div>
+    <div class="tool-section rotate-section">
+      <div class="tool-title">Transform UI / 旋轉</div>
+      <div class="tool-note">拖白點縮放、拖青色圓點旋轉</div>
       <div class="tool-note">Shift 鎖比例／15°，Alt 中心縮放</div>
+      <div class="rotate-button-row">
+        <button id="rotateLeftBtn" type="button">↺ 左轉 15°</button>
+        <button id="rotateResetBtn" type="button">重設角度</button>
+        <button id="rotateRightBtn" type="button">↻ 右轉 15°</button>
+      </div>
     </div>
 
     <button id="distributeHBtn">Smart Distribute 水平</button>
@@ -538,6 +543,9 @@ export function initToolbar() {
   bindPress("redoBtn", runRedo);
   bindPress("floatUndoBtn", runUndo);
   bindPress("floatRedoBtn", runRedo);
+  bindPress("rotateLeftBtn", () => rotateSelectedByDegrees(-15));
+  bindPress("rotateRightBtn", () => rotateSelectedByDegrees(15));
+  bindPress("rotateResetBtn", () => resetSelectedRotation());
 
   bindPress("nudgeUpBtn", () => nudgeBy("up"));
   bindPress("nudgeDownBtn", () => nudgeBy("down"));

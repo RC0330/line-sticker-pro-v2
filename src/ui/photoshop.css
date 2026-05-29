@@ -2379,3 +2379,40 @@ body.multi-select-mode canvas {
     grid-template-columns: 1fr !important;
   }
 }
+
+
+/* v35 layer lock/unlock fix */
+.layer-item.locked {
+  opacity: 0.72;
+}
+
+.layer-lock-btn.active,
+.layer-item.locked .layer-lock-btn {
+  background: #f59e0b !important;
+  color: #111827 !important;
+  font-weight: 900;
+}
+
+.layer-visible-btn,
+.layer-lock-btn {
+  touch-action: manipulation;
+  user-select: none;
+}
+
+
+.rotate-button-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.rotate-button-row button {
+  min-height: 40px;
+}
+
+@media (max-width: 900px) {
+  .rotate-button-row {
+    grid-template-columns: 1fr;
+  }
+}
