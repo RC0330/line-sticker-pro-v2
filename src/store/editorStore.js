@@ -70,5 +70,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v38-crop-list-management"
+  appVersion: "v39-batch-lock-opacity"
 };
