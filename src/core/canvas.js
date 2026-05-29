@@ -1251,9 +1251,10 @@ function onPointerDown(e) {
     }
 
     if (pointInBox(pos.x, pos.y, box)) {
-      if (editorStore.mobileMultiSelectMode && isTouch) {
+      if (editorStore.mobileMultiSelectMode) {
         editorStore.deleteButtonBox = -1;
         toggleBoxSelection(index);
+        editorStore.transformStatus = editorStore.selected.includes(index) ? "已加入多選" : "已從多選移除";
         return;
       }
 
