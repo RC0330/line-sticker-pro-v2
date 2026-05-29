@@ -2,7 +2,7 @@ import { editorStore } from "../store/editorStore.js";
 import { autoDetectCropBoxesFromImage } from "../ai/detect.js";
 import { createCropBoxCentered, deleteSelectedBoxes, distributeSelected, draw, fitImageToView, replaceBoxes, resetSelectedRotation, resetView, rotateSelectedByDegrees, setEditableGridTemplate, setImageAndFit, setPanMode, togglePanMode, zoomIn, zoomOut } from "../core/canvas.js";
 import { snapBoxesToContent } from "../ai/grid-snap.js";
-import { EXPORT_PRESETS, exportSelectedPng, exportZip, previewCrop, renderLineExportReport, renderStickerWallPreview } from "../core/exporter.js";
+import { EXPORT_PRESETS, exportSelectedPng, exportZip, previewCrop, renderLineExportReport, renderStickerWallPreview, openStickerWallPreviewWindow } from "../core/exporter.js";
 import { applyReferenceSizeToAll, batchRenameCrops, deleteEmptyCrops, duplicateSelectedCrops, setLockedForTargets, setOpacityForTargets, sortCropsByNumber, toggleSelectAllCrops } from "../core/crop-manager.js";
 import { undo, redo, saveHistory } from "../core/history.js";
 import { renderLayers } from "./layer-panel.js";
@@ -39,7 +39,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v46 已載入｜全功能鍵修正＋多選群組移動縮放</div>
+    <div class="version-badge">v47 已載入｜貼圖牆完整預覽新視窗</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -197,7 +197,7 @@ export function initToolbar() {
             <span>列數</span>
             <input id="wallRowsInput" type="number" min="1" max="20" value="4" inputmode="numeric" />
           </label>
-          <button id="previewWallBtn" type="button">更新貼圖牆預覽</button>
+          <button id="previewWallBtn" type="button">更新貼圖牆預覽 / 開新視窗</button>
         </div>
         <div id="stickerWallMeta" class="tool-note">預設為 4×4，可自行調整欄數與列數。</div>
         <div id="stickerWallPreview" class="sticker-wall-preview"><div class="preview-empty">按上方按鈕即可產生貼圖牆預覽。</div></div>
@@ -459,10 +459,11 @@ export function initToolbar() {
     updateStickerWallPreview();
   }
 
-  function updateStickerWallPreview() {
+  function updateStickerWallPreview(openFullWindow = false) {
     syncExportOptions();
     const { columns, rows } = getStickerWallSettings();
     renderStickerWallPreview(columns, rows);
+    if (openFullWindow) openStickerWallPreviewWindow(columns, rows);
   }
 
 
@@ -851,7 +852,7 @@ export function initToolbar() {
   bindPress("wall4x4Btn", () => applyStickerWallPreset(4, 4));
   bindPress("wall2x4Btn", () => applyStickerWallPreset(2, 4));
   bindPress("wall5x8Btn", () => applyStickerWallPreset(5, 8));
-  bindPress("previewWallBtn", () => updateStickerWallPreview());
+  bindPress("previewWallBtn", () => updateStickerWallPreview(true));
 
   bindPress("exportSelectedBtn", async () => {
     syncExportOptions();
