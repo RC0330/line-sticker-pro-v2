@@ -1207,6 +1207,12 @@ function handleGlobalMultiSelectHit(pos) {
   const index = getBestMultiSelectIndexAt(pos);
   if (index < 0) return false;
 
+  // v46: 已經多選 2 個以上時，點在已選 Crop 上要保留給「群組移動/縮放」，不能再切換選取。
+  // 點未選 Crop 才加入多選；點已選 Crop 的群組框或白點可一起移動/縮放。
+  if (editorStore.selected.length > 1 && editorStore.selected.includes(index)) {
+    return false;
+  }
+
   editorStore.deleteButtonBox = -1;
   toggleBoxSelection(index);
   editorStore.activeBox = editorStore.selected[0] ?? -1;
