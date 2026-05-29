@@ -2,7 +2,7 @@ import { editorStore } from "../store/editorStore.js";
 import { autoDetectCropBoxesFromImage } from "../ai/detect.js";
 import { createCropBoxCentered, deleteSelectedBoxes, distributeSelected, draw, fitImageToView, replaceBoxes, resetSelectedRotation, resetView, rotateSelectedByDegrees, setEditableGridTemplate, setImageAndFit, setPanMode, togglePanMode, zoomIn, zoomOut } from "../core/canvas.js";
 import { snapBoxesToContent } from "../ai/grid-snap.js";
-import { EXPORT_PRESETS, exportSelectedPng, exportZip, previewCrop } from "../core/exporter.js";
+import { EXPORT_PRESETS, exportSelectedPng, exportZip, previewCrop, renderLineExportReport } from "../core/exporter.js";
 import { undo, redo, saveHistory } from "../core/history.js";
 import { renderLayers } from "./layer-panel.js";
 
@@ -38,7 +38,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v36 已載入｜裁切框旋轉功能恢復</div>
+    <div class="version-badge">v37 已載入｜LINE 匯出檢查＋自動命名</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -143,10 +143,16 @@ export function initToolbar() {
       </div>
       <div id="presetNote" class="tool-note"></div>
 
+      <label class="tool-label">自動命名前綴</label>
+      <input id="filenamePrefix" class="text-input" type="text" value="sticker" maxlength="40" placeholder="例如：sticker" />
+      <div id="fileNamingNote" class="tool-note"></div>
+
       <button id="previewCropBtn">預覽選取裁切</button>
+      <button id="checkLineBtn">LINE 匯出檢查</button>
       <button id="exportSelectedBtn">匯出選取 PNG</button>
       <button id="exportAllBtn">全部裁切 ZIP</button>
       <div id="cropPreview" class="crop-preview"><div class="preview-empty">選取裁切框後可預覽透明 PNG</div></div>
+      <div id="lineCheckReport" class="line-check-report"><div class="preview-empty">按「LINE 匯出檢查」可檢查尺寸、透明背景與自動命名。</div></div>
     </details>
   </div>
   `;
@@ -578,19 +584,23 @@ export function initToolbar() {
   const preset = document.getElementById("exportPreset");
   const presetButtons = Array.from(document.querySelectorAll(".preset-choice"));
   const presetNote = document.getElementById("presetNote");
+  const filenamePrefix = document.getElementById("filenamePrefix");
+  const fileNamingNote = document.getElementById("fileNamingNote");
   const tolLabel = document.getElementById("tolLabel");
   const featherLabel = document.getElementById("featherLabel");
 
   function syncExportOptions() {
     const presetKey = preset.value || "scale1";
     const presetDef = EXPORT_PRESETS[presetKey] || EXPORT_PRESETS.scale1;
+    const prefix = String(filenamePrefix?.value || "sticker").trim() || "sticker";
     editorStore.exportOptions = {
       removeBackground: removeBgCheck.checked,
       tolerance: Number(tolerance.value),
       feather: Number(feather.value),
       preset: presetKey,
       scale: presetDef?.scale || 1,
-      margin: presetKey === "lineSticker" ? 10 : 0
+      margin: presetKey === "lineSticker" ? 10 : 0,
+      filenamePrefix: prefix
     };
     presetButtons.forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.preset === presetKey);
@@ -606,6 +616,9 @@ export function initToolbar() {
       presetNote.textContent = `${selectedPreset.label}：固定尺寸輸出，畫面置中填滿，可能裁掉邊緣。`;
     } else {
       presetNote.textContent = `${selectedPreset.label}：依裁切框尺寸乘倍率輸出。`;
+    }
+    if (fileNamingNote) {
+      fileNamingNote.textContent = `自動命名預覽：${prefix}_01.png、${prefix}_02.png、${prefix}_03.png …`;
     }
   }
 
@@ -624,7 +637,7 @@ export function initToolbar() {
     });
   });
 
-  [removeBgCheck, tolerance, feather, preset].forEach((el) => {
+  [removeBgCheck, tolerance, feather, preset, filenamePrefix].forEach((el) => {
     el.addEventListener("input", syncExportOptions);
     el.addEventListener("change", syncExportOptions);
   });
@@ -658,6 +671,11 @@ export function initToolbar() {
     previewCrop();
   });
 
+  bindPress("checkLineBtn", () => {
+    syncExportOptions();
+    renderLineExportReport(false);
+  });
+
   bindPress("exportSelectedBtn", async () => {
     syncExportOptions();
     await exportSelectedPng();
@@ -665,6 +683,7 @@ export function initToolbar() {
 
   bindPress("exportAllBtn", async () => {
     syncExportOptions();
+    renderLineExportReport(false);
     await exportZip(false);
   });
 }
