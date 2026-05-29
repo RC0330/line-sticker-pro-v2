@@ -20,6 +20,29 @@ function moveLayer(fromIndex, toIndex) {
   saveHistory();
 }
 
+
+function bindLayerButton(button, action) {
+  let lastRun = 0;
+
+  const stopOnly = (e) => {
+    e.preventDefault?.();
+    e.stopPropagation?.();
+  };
+
+  const run = (e) => {
+    stopOnly(e);
+    const now = Date.now();
+    if (now - lastRun < 220) return;
+    lastRun = now;
+    action(e);
+  };
+
+  button.addEventListener("pointerdown", run, { passive: false });
+  button.addEventListener("touchstart", run, { passive: false });
+  button.addEventListener("mousedown", stopOnly);
+  button.addEventListener("click", run);
+}
+
 export function renderLayers() {
   const panel = document.getElementById("layers");
   if (!panel) return;
@@ -37,6 +60,7 @@ export function renderLayers() {
     div.dataset.index = String(realIndex);
 
     if (editorStore.selected.includes(realIndex)) div.classList.add("active");
+    if (box.locked) div.classList.add("locked");
 
     div.addEventListener("dragstart", (e) => {
       e.dataTransfer.setData("text/plain", String(realIndex));
@@ -79,25 +103,44 @@ export function renderLayers() {
     title.oninput = () => {
       box.name = title.value;
     };
+    title.addEventListener("pointerdown", (e) => e.stopPropagation());
     title.onclick = (e) => e.stopPropagation();
 
     const visible = document.createElement("button");
+    visible.type = "button";
+    visible.className = "layer-visible-btn";
     visible.innerHTML = box.visible === false ? "🙈" : "👁";
-    visible.onclick = (e) => {
-      e.stopPropagation();
+    visible.title = box.visible === false ? "顯示裁切框" : "隱藏裁切框";
+    bindLayerButton(visible, () => {
+      saveHistory();
       box.visible = !box.visible;
       renderLayers();
       draw();
-    };
+    });
 
     const lock = document.createElement("button");
+    lock.type = "button";
+    lock.className = "layer-lock-btn";
     lock.innerHTML = box.locked ? "🔒" : "🔓";
-    lock.onclick = (e) => {
-      e.stopPropagation();
+    lock.title = box.locked ? "解除鎖定：可移動 / 縮放 / 旋轉" : "鎖定：避免誤移動 / 誤縮放";
+    lock.setAttribute("aria-pressed", box.locked ? "true" : "false");
+    if (box.locked) lock.classList.add("active");
+    bindLayerButton(lock, () => {
+      saveHistory();
       box.locked = !box.locked;
+      editorStore.transformStatus = box.locked
+        ? `已鎖定 ${box.name || `Crop ${realIndex + 1}`}`
+        : `已解除鎖定 ${box.name || `Crop ${realIndex + 1}`}`;
+
+      if (box.locked) {
+        editorStore.selected = editorStore.selected.filter((i) => i !== realIndex);
+      } else if (!editorStore.selected.includes(realIndex)) {
+        editorStore.selected = [realIndex];
+      }
+
       renderLayers();
       draw();
-    };
+    });
 
     const opacity = document.createElement("input");
     opacity.type = "range";
@@ -109,6 +152,8 @@ export function renderLayers() {
       box.opacity = parseFloat(opacity.value);
       draw();
     };
+    opacity.addEventListener("pointerdown", (e) => e.stopPropagation());
+    opacity.onchange = () => saveHistory();
     opacity.onclick = (e) => e.stopPropagation();
 
     div.onclick = (e) => {
