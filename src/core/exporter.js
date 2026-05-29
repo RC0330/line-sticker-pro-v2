@@ -469,6 +469,217 @@ export function renderLineExportReport(onlySelected = false) {
 }
 
 
+
+function buildStickerWallPreviewData(columns = 4, rows = 4) {
+  const cols = Math.max(1, Math.min(12, Number(columns) || 4));
+  const rowCount = Math.max(1, Math.min(20, Number(rows) || 4));
+  const capacity = cols * rowCount;
+  const items = getExportBoxes(false);
+  const total = items.length;
+  const cells = [];
+
+  if (!editorStore.image) {
+    return { ok: false, message: "請先上傳圖片，才能預覽 LINE 貼圖牆。", columns: cols, rows: rowCount, capacity, total, cells };
+  }
+
+  if (!items.length) {
+    return { ok: false, message: "目前沒有可預覽的 Crop。", columns: cols, rows: rowCount, capacity, total, cells };
+  }
+
+  for (let i = 0; i < capacity; i += 1) {
+    if (i < items.length) {
+      const { box } = items[i];
+      const canvas = drawCropToCanvas(box, editorStore.exportOptions || {});
+      cells.push({
+        empty: false,
+        imageSrc: canvas.toDataURL("image/png"),
+        filename: buildExportFilename(i + 1, items.length, editorStore.exportOptions || {}),
+        cropName: box.name || `Crop ${i + 1}`,
+        width: canvas.width,
+        height: canvas.height
+      });
+    } else {
+      cells.push({ empty: true });
+    }
+  }
+
+  return {
+    ok: true,
+    message: `貼圖牆預覽：${cols}×${rowCount}（共 ${capacity} 格），目前顯示 ${Math.min(capacity, items.length)} / ${items.length} 個 Crop。`,
+    columns: cols,
+    rows: rowCount,
+    capacity,
+    total,
+    cells
+  };
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+export function openStickerWallPreviewWindow(columns = 4, rows = 4) {
+  const data = buildStickerWallPreviewData(columns, rows);
+  if (!data.ok) {
+    alert(data.message);
+    return null;
+  }
+
+  const previewWindow = window.open("", "_blank", "popup=yes,width=1280,height=920,scrollbars=yes,resizable=yes");
+  if (!previewWindow) {
+    alert("瀏覽器封鎖了新視窗。請允許此網站開啟彈出視窗，再重新按一次『更新貼圖牆預覽』。");
+    return data;
+  }
+
+  const cellHtml = data.cells.map((cell, index) => {
+    if (cell.empty) {
+      return `
+        <div class="cell empty">
+          <div class="empty-text">空白格 ${index + 1}</div>
+        </div>
+      `;
+    }
+    return `
+      <div class="cell">
+        <div class="index">${index + 1}</div>
+        <img src="${cell.imageSrc}" alt="${escapeHtml(cell.cropName)}" />
+        <div class="filename">${escapeHtml(cell.filename)}</div>
+        <div class="crop-name">${escapeHtml(cell.cropName)}｜${cell.width}×${cell.height}</div>
+      </div>
+    `;
+  }).join("");
+
+  const html = `<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LINE 貼圖牆完整預覽 ${data.columns}×${data.rows}</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      margin: -24px -24px 24px;
+      padding: 18px 24px;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 22px; }
+    .meta { color: #cbd5e1; font-size: 14px; margin-top: 6px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: #2563eb;
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .wall {
+      display: grid;
+      grid-template-columns: repeat(${data.columns}, minmax(160px, 1fr));
+      gap: 16px;
+      align-items: stretch;
+    }
+    .cell {
+      position: relative;
+      min-height: 210px;
+      border-radius: 16px;
+      padding: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background:
+        linear-gradient(45deg, rgba(255,255,255,0.09) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.09) 75%),
+        linear-gradient(45deg, rgba(255,255,255,0.09) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.09) 75%),
+        #1e293b;
+      background-position: 0 0, 10px 10px, 0 0;
+      background-size: 20px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .cell img {
+      width: 100%;
+      height: 160px;
+      object-fit: contain;
+      display: block;
+    }
+    .index {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      min-width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(37, 99, 235, 0.92);
+      color: white;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .filename { color: #f8fafc; font-size: 13px; font-weight: 900; word-break: break-all; text-align: center; }
+    .crop-name { color: #cbd5e1; font-size: 12px; word-break: break-all; text-align: center; }
+    .empty { opacity: .65; }
+    .empty-text { color: #94a3b8; font-weight: 800; }
+    @media print {
+      body { background: white; color: #111827; padding: 12px; }
+      .topbar { position: static; margin: 0 0 16px; background: white; color: #111827; }
+      button { display: none; }
+      .wall { gap: 8px; }
+      .cell { break-inside: avoid; border-color: #d1d5db; background: white; }
+      .filename, .crop-name, .meta { color: #111827; }
+    }
+    @media (max-width: 900px) {
+      .wall { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+      .cell img { height: 130px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <h1>LINE 貼圖牆完整預覽 ${data.columns}×${data.rows}</h1>
+      <div class="meta">${escapeHtml(data.message)}｜產生時間：${new Date().toLocaleString()}</div>
+    </div>
+    <div class="actions">
+      <button onclick="window.print()">列印 / 另存 PDF</button>
+      <button onclick="window.close()">關閉視窗</button>
+    </div>
+  </div>
+  <div class="wall">${cellHtml}</div>
+</body>
+</html>`;
+
+  previewWindow.document.open();
+  previewWindow.document.write(html);
+  previewWindow.document.close();
+  previewWindow.focus();
+  return data;
+}
+
 export function renderStickerWallPreview(columns = 4, rows = 4) {
   const wall = document.getElementById("stickerWallPreview");
   const meta = document.getElementById("stickerWallMeta");
