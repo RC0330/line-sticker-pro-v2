@@ -55,7 +55,8 @@ export const editorStore = {
     feather: 8,
     scale: 1,
     preset: "scale1",
-    margin: 0
+    margin: 0,
+    filenamePrefix: "sticker"
   },
 
   bgTolerance: 34,
@@ -69,5 +70,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v36-rotate-restore"
+  appVersion: "v37-line-export-check-naming"
 };
