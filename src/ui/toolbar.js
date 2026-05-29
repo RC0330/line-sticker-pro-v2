@@ -39,7 +39,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v42 已載入｜多選/預覽/復原再修正</div>
+    <div class="version-badge">v44 已載入｜預覽/復原/多選實際修正</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -876,5 +876,45 @@ export function initToolbar() {
     syncExportOptions();
     renderLineExportReport(false);
     await exportZip(false);
+  });
+
+  function runCriticalToolbarActionById(id, e) {
+    if (!id) return false;
+    if (id === "previewCropBtn") {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      runPreviewCropAction();
+      return true;
+    }
+    if (id === "undoBtn" || id === "floatUndoBtn") {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      runUndo();
+      return true;
+    }
+    if (id === "redoBtn" || id === "floatRedoBtn") {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      runRedo();
+      return true;
+    }
+    return false;
+  }
+
+  // Critical fallback: capture phase 先處理，避免按鈕被浮動工具列、details、或其他 pointer handler 吃掉。
+  ["click", "pointerup", "touchend"].forEach((eventName) => {
+    document.addEventListener(eventName, (e) => {
+      const button = e.target?.closest?.("#previewCropBtn,#undoBtn,#redoBtn,#floatUndoBtn,#floatRedoBtn");
+      if (!button) return;
+      const now = Date.now();
+      const last = Number(button.dataset.criticalLastRun || 0);
+      if (now - last < 220) {
+        e.preventDefault?.();
+        e.stopPropagation?.();
+        return;
+      }
+      button.dataset.criticalLastRun = String(now);
+      runCriticalToolbarActionById(button.id, e);
+    }, { capture: true, passive: false });
   });
 }
