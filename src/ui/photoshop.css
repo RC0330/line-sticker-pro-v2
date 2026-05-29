@@ -2660,3 +2660,42 @@ body.multi-select-mode canvas {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* v45 desktop left panel width + complete controls */
+@media (min-width: 901px) {
+  .left-panel {
+    width: 360px !important;
+    min-width: 360px !important;
+    max-width: 360px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .toolbar-wrap {
+    padding: 16px !important;
+    gap: 12px !important;
+  }
+
+  .sticker-wall-preset-row,
+  .grid-preset-buttons,
+  .crop-manage-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .sticker-wall-preset-row button,
+  .sticker-wall-custom-row button,
+  .toolbar-wrap button {
+    white-space: normal !important;
+    word-break: keep-all !important;
+    line-height: 1.35 !important;
+  }
+
+  .sticker-wall-custom-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
+
+  .sticker-wall-custom-row button {
+    grid-column: 1 / -1 !important;
+  }
+}

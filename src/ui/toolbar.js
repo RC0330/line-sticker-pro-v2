@@ -39,7 +39,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v44 已載入｜預覽/復原/多選實際修正</div>
+    <div class="version-badge">v45 已載入｜左側加寬＋按鈕事件修正</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -488,8 +488,7 @@ export function initToolbar() {
 
     const run = async (e) => {
       const now = Date.now();
-      // pointerdown 已執行時，後續 click/touchend 會被忽略，避免重複觸發。
-      if (now - lastRun < 260) {
+      if (now - lastRun < 180) {
         e?.preventDefault?.();
         e?.stopPropagation?.();
         return;
@@ -505,13 +504,43 @@ export function initToolbar() {
       }
     };
 
-    // 用 pointerdown 立即觸發，解決 Safari / Chrome 上 click 被其他層吃掉的問題。
-    el.addEventListener("pointerdown", run, { passive: false });
-    el.addEventListener("click", run);
+    // v45: 改用 click / pointerup / touchend，避免 pointerdown 太早觸發後被其他層判定為拖曳或吞掉。
+    el.onclick = run;
+    el.addEventListener("pointerup", run, { passive: false });
     el.addEventListener("touchend", run, { passive: false });
+    el.addEventListener("mousedown", (e) => {
+      // 保留滑鼠按下時不讓事件往畫布傳遞，但不在 mousedown 執行主要動作。
+      e.preventDefault?.();
+      e.stopPropagation?.();
+    }, { passive: false });
     el.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") run(e);
     });
+  }
+
+  function bindCriticalButton(id, action) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    let lastRun = 0;
+    const run = async (e) => {
+      const now = Date.now();
+      if (now - lastRun < 160) {
+        e?.preventDefault?.();
+        e?.stopPropagation?.();
+        return;
+      }
+      lastRun = now;
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      await action(e);
+    };
+    el.onclick = run;
+    el.onpointerup = run;
+    el.ontouchend = run;
+    el.onmousedown = (e) => {
+      e.preventDefault?.();
+      e.stopPropagation?.();
+    };
   }
 
 
@@ -713,12 +742,10 @@ export function initToolbar() {
     if (direction === "right") nudgeSelected(step, 0);
   }
 
-  bindPress("undoBtn", runUndo);
-  bindPress("redoBtn", runRedo);
-  bindPress("floatUndoBtn", runUndo);
-  bindPress("floatRedoBtn", runRedo);
-  document.getElementById("undoBtn")?.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); runUndo(); }, { passive: false });
-  document.getElementById("redoBtn")?.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); runRedo(); }, { passive: false });
+  bindCriticalButton("undoBtn", runUndo);
+  bindCriticalButton("redoBtn", runRedo);
+  bindCriticalButton("floatUndoBtn", runUndo);
+  bindCriticalButton("floatRedoBtn", runRedo);
   bindPress("rotateLeftBtn", () => rotateSelectedByDegrees(-15));
   bindPress("rotateRightBtn", () => rotateSelectedByDegrees(15));
   bindPress("rotateResetBtn", () => resetSelectedRotation());
@@ -837,8 +864,6 @@ export function initToolbar() {
         window.setTimeout(() => exportDetails.scrollIntoView({ behavior: "smooth", block: "nearest" }), 30);
       }
     };
-    exportSummary.addEventListener("pointerdown", toggleExportDetails, { passive: false });
-    exportSummary.addEventListener("touchstart", toggleExportDetails, { passive: false });
     exportSummary.addEventListener("click", toggleExportDetails);
   }
 
@@ -850,12 +875,7 @@ export function initToolbar() {
     syncCropManageNote("已更新選取裁切預覽");
   }
 
-  bindPress("previewCropBtn", runPreviewCropAction);
-  document.getElementById("previewCropBtn")?.addEventListener("mousedown", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    runPreviewCropAction();
-  }, { passive: false });
+  bindCriticalButton("previewCropBtn", runPreviewCropAction);
 
   bindPress("checkLineBtn", () => {
     syncExportOptions();
@@ -878,43 +898,4 @@ export function initToolbar() {
     await exportZip(false);
   });
 
-  function runCriticalToolbarActionById(id, e) {
-    if (!id) return false;
-    if (id === "previewCropBtn") {
-      e?.preventDefault?.();
-      e?.stopPropagation?.();
-      runPreviewCropAction();
-      return true;
-    }
-    if (id === "undoBtn" || id === "floatUndoBtn") {
-      e?.preventDefault?.();
-      e?.stopPropagation?.();
-      runUndo();
-      return true;
-    }
-    if (id === "redoBtn" || id === "floatRedoBtn") {
-      e?.preventDefault?.();
-      e?.stopPropagation?.();
-      runRedo();
-      return true;
-    }
-    return false;
-  }
-
-  // Critical fallback: capture phase 先處理，避免按鈕被浮動工具列、details、或其他 pointer handler 吃掉。
-  ["click", "pointerup", "touchend"].forEach((eventName) => {
-    document.addEventListener(eventName, (e) => {
-      const button = e.target?.closest?.("#previewCropBtn,#undoBtn,#redoBtn,#floatUndoBtn,#floatRedoBtn");
-      if (!button) return;
-      const now = Date.now();
-      const last = Number(button.dataset.criticalLastRun || 0);
-      if (now - last < 220) {
-        e.preventDefault?.();
-        e.stopPropagation?.();
-        return;
-      }
-      button.dataset.criticalLastRun = String(now);
-      runCriticalToolbarActionById(button.id, e);
-    }, { capture: true, passive: false });
-  });
 }
