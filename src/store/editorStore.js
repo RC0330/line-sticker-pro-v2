@@ -74,5 +74,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v41-multiselect-preview-undo-fix"
+  appVersion: "v42-multiselect-preview-undo-fix2"
 };
