@@ -70,5 +70,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v37-line-export-check-naming"
+  appVersion: "v38-crop-list-management"
 };
