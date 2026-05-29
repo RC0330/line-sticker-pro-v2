@@ -1017,6 +1017,7 @@ function snapshotSelected() {
 }
 
 function startGroupResize(pos, handleName) {
+  saveHistory();
   if (!editorStore.gridTemplate?.active) editorStore.deleteButtonBox = -1;
   if (!editorStore.gridTemplate?.active) deactivateGridTemplate(true);
   groupResizing = true;
@@ -1030,6 +1031,7 @@ function startGroupResize(pos, handleName) {
 }
 
 function startSingleResize(pos, index, handleName) {
+  saveHistory();
   if (!editorStore.gridTemplate?.active) editorStore.deleteButtonBox = -1;
   if (!editorStore.gridTemplate?.active) deactivateGridTemplate(true);
   const box = editorStore.boxes[index];
@@ -1049,6 +1051,7 @@ function startSingleResize(pos, index, handleName) {
 }
 
 function startRotate(pos, index = null) {
+  saveHistory();
   if (!editorStore.gridTemplate?.active) editorStore.deleteButtonBox = -1;
   if (!editorStore.gridTemplate?.active) deactivateGridTemplate(true);
   rotating = true;
@@ -1076,6 +1079,7 @@ function startRotate(pos, index = null) {
 }
 
 function startDrag(pos, index, keepSelection) {
+  saveHistory();
   editorStore.deleteButtonBox = -1;
   const box = editorStore.boxes[index];
   editorStore.activeBox = index;
@@ -1179,26 +1183,39 @@ function updateViewPan(screenPoint) {
   draw();
 }
 
-function handleGlobalMultiSelectHit(pos) {
-  if (!editorStore.mobileMultiSelectMode) return false;
-
-  for (let index = editorStore.boxes.length - 1; index >= 0; index -= 1) {
+function getBestMultiSelectIndexAt(pos) {
+  const hits = [];
+  for (let index = 0; index < editorStore.boxes.length; index += 1) {
     const box = editorStore.boxes[index];
     if (!box || box.visible === false || box.locked) continue;
     if (!pointInBox(pos.x, pos.y, box)) continue;
-
-    editorStore.deleteButtonBox = -1;
-    toggleBoxSelection(index);
-    editorStore.activeBox = editorStore.selected[0] ?? -1;
-    editorStore.transformStatus = editorStore.selected.includes(index)
-      ? `多選已加入 Crop ${index + 1}，目前共 ${editorStore.selected.length} 個`
-      : `多選已移除 Crop ${index + 1}，目前共 ${editorStore.selected.length} 個`;
-    renderLayers();
-    draw();
-    return true;
+    const center = getBoxCenter(box);
+    const area = Math.max(1, box.width * box.height);
+    const distance = Math.hypot(pos.x - center.x, pos.y - center.y);
+    hits.push({ index, area, distance });
   }
 
-  return false;
+  if (!hits.length) return -1;
+  // 多選時若裁切框互相重疊，優先選「面積較小且中心較近」的 Crop，避免大框蓋住小框。
+  hits.sort((a, b) => (a.area - b.area) || (a.distance - b.distance) || (b.index - a.index));
+  return hits[0].index;
+}
+
+function handleGlobalMultiSelectHit(pos) {
+  if (!editorStore.mobileMultiSelectMode) return false;
+
+  const index = getBestMultiSelectIndexAt(pos);
+  if (index < 0) return false;
+
+  editorStore.deleteButtonBox = -1;
+  toggleBoxSelection(index);
+  editorStore.activeBox = editorStore.selected[0] ?? -1;
+  editorStore.transformStatus = editorStore.selected.includes(index)
+    ? `多選已加入 Crop ${index + 1}，目前共 ${editorStore.selected.length} 個`
+    : `多選已移除 Crop ${index + 1}，目前共 ${editorStore.selected.length} 個`;
+  renderLayers();
+  draw();
+  return true;
 }
 
 function onPointerDown(e) {
