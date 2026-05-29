@@ -74,5 +74,5 @@ export const editorStore = {
     horizontalLines: []
   },
 
-  appVersion: "v40-sticker-wall-preview"
+  appVersion: "v41-multiselect-preview-undo-fix"
 };
