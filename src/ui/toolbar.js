@@ -2,7 +2,7 @@ import { editorStore } from "../store/editorStore.js";
 import { autoDetectCropBoxesFromImage } from "../ai/detect.js";
 import { createCropBoxCentered, deleteSelectedBoxes, distributeSelected, draw, fitImageToView, replaceBoxes, resetSelectedRotation, resetView, rotateSelectedByDegrees, setEditableGridTemplate, setImageAndFit, setPanMode, togglePanMode, zoomIn, zoomOut } from "../core/canvas.js";
 import { snapBoxesToContent } from "../ai/grid-snap.js";
-import { EXPORT_PRESETS, exportSelectedPng, exportZip, previewCrop, renderLineExportReport } from "../core/exporter.js";
+import { EXPORT_PRESETS, exportSelectedPng, exportZip, previewCrop, renderLineExportReport, renderStickerWallPreview } from "../core/exporter.js";
 import { applyReferenceSizeToAll, batchRenameCrops, deleteEmptyCrops, duplicateSelectedCrops, setLockedForTargets, setOpacityForTargets, sortCropsByNumber, toggleSelectAllCrops } from "../core/crop-manager.js";
 import { undo, redo, saveHistory } from "../core/history.js";
 import { renderLayers } from "./layer-panel.js";
@@ -39,7 +39,7 @@ export function initToolbar() {
 
   toolbar.innerHTML = `
   <div class="toolbar-wrap">
-    <div class="version-badge">v39 已載入｜批次鎖定 / 解鎖 ＋ 批次透明度</div>
+    <div class="version-badge">v40 已載入｜預覽 LINE 貼圖牆</div>
 
     <div class="quick-history-buttons quick-history-top">
       <button id="undoBtn" type="button">↶ 復原</button>
@@ -179,6 +179,29 @@ export function initToolbar() {
       <button id="exportAllBtn">全部裁切 ZIP</button>
       <div id="cropPreview" class="crop-preview"><div class="preview-empty">選取裁切框後可預覽透明 PNG</div></div>
       <div id="lineCheckReport" class="line-check-report"><div class="preview-empty">按「LINE 匯出檢查」可檢查尺寸、透明背景與自動命名。</div></div>
+
+      <div class="tool-section sticker-wall-section">
+        <div class="tool-title">預覽 LINE 貼圖牆</div>
+        <div class="tool-note">可快速查看 4×4、2×4、5×8 的整體排列效果，也可自行設定列數與欄數。</div>
+        <div class="sticker-wall-preset-row">
+          <button id="wall4x4Btn" type="button">4×4 預覽</button>
+          <button id="wall2x4Btn" type="button">2×4 預覽</button>
+          <button id="wall5x8Btn" type="button">5×8 預覽</button>
+        </div>
+        <div class="sticker-wall-custom-row">
+          <label class="grid-input-field">
+            <span>欄數</span>
+            <input id="wallColumnsInput" type="number" min="1" max="12" value="4" inputmode="numeric" />
+          </label>
+          <label class="grid-input-field">
+            <span>列數</span>
+            <input id="wallRowsInput" type="number" min="1" max="20" value="4" inputmode="numeric" />
+          </label>
+          <button id="previewWallBtn" type="button">更新貼圖牆預覽</button>
+        </div>
+        <div id="stickerWallMeta" class="tool-note">預設為 4×4，可自行調整欄數與列數。</div>
+        <div id="stickerWallPreview" class="sticker-wall-preview"><div class="preview-empty">按上方按鈕即可產生貼圖牆預覽。</div></div>
+      </div>
     </details>
   </div>
   `;
@@ -407,6 +430,27 @@ export function initToolbar() {
     batchOpacityLabel.textContent = `${batchOpacityRange.value}%`;
   }
 
+  function getStickerWallSettings() {
+    const columns = clampNumber(parseInt(wallColumnsInput?.value || "4", 10), 1, 12);
+    const rows = clampNumber(parseInt(wallRowsInput?.value || "4", 10), 1, 20);
+    if (wallColumnsInput) wallColumnsInput.value = String(columns);
+    if (wallRowsInput) wallRowsInput.value = String(rows);
+    editorStore.previewWall = { columns, rows };
+    return { columns, rows };
+  }
+
+  function applyStickerWallPreset(columns, rows) {
+    if (wallColumnsInput) wallColumnsInput.value = String(columns);
+    if (wallRowsInput) wallRowsInput.value = String(rows);
+    updateStickerWallPreview();
+  }
+
+  function updateStickerWallPreview() {
+    syncExportOptions();
+    const { columns, rows } = getStickerWallSettings();
+    renderStickerWallPreview(columns, rows);
+  }
+
 
   function deleteSelectedAction() {
     if (!editorStore.selected.length) {
@@ -544,6 +588,10 @@ export function initToolbar() {
     input?.addEventListener("input", syncGridResultNote);
     input?.addEventListener("change", syncGridResultNote);
   });
+  if (editorStore.previewWall) {
+    if (wallColumnsInput) wallColumnsInput.value = String(editorStore.previewWall.columns || 4);
+    if (wallRowsInput) wallRowsInput.value = String(editorStore.previewWall.rows || 4);
+  }
   syncGridResultNote();
   syncMultiSelectButtons();
   syncSelectAllButton();
@@ -553,6 +601,8 @@ export function initToolbar() {
   document.addEventListener("crop-ui-updated", () => {
     syncSelectAllButton();
     syncCropManageNote();
+    const wall = document.getElementById("stickerWallPreview");
+    if (wall && !wall.querySelector(".preview-empty")) updateStickerWallPreview();
   });
 
   bindPress("floatScrollTopBtn", () => {
@@ -690,6 +740,8 @@ export function initToolbar() {
   const fileNamingNote = document.getElementById("fileNamingNote");
   const batchOpacityRange = document.getElementById("batchOpacityRange");
   const batchOpacityLabel = document.getElementById("batchOpacityLabel");
+  const wallColumnsInput = document.getElementById("wallColumnsInput");
+  const wallRowsInput = document.getElementById("wallRowsInput");
   const tolLabel = document.getElementById("tolLabel");
   const featherLabel = document.getElementById("featherLabel");
 
@@ -779,6 +831,11 @@ export function initToolbar() {
     syncExportOptions();
     renderLineExportReport(false);
   });
+
+  bindPress("wall4x4Btn", () => applyStickerWallPreset(4, 4));
+  bindPress("wall2x4Btn", () => applyStickerWallPreset(2, 4));
+  bindPress("wall5x8Btn", () => applyStickerWallPreset(5, 8));
+  bindPress("previewWallBtn", () => updateStickerWallPreview());
 
   bindPress("exportSelectedBtn", async () => {
     syncExportOptions();
