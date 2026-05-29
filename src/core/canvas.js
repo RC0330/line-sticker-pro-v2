@@ -1179,6 +1179,28 @@ function updateViewPan(screenPoint) {
   draw();
 }
 
+function handleGlobalMultiSelectHit(pos) {
+  if (!editorStore.mobileMultiSelectMode) return false;
+
+  for (let index = editorStore.boxes.length - 1; index >= 0; index -= 1) {
+    const box = editorStore.boxes[index];
+    if (!box || box.visible === false || box.locked) continue;
+    if (!pointInBox(pos.x, pos.y, box)) continue;
+
+    editorStore.deleteButtonBox = -1;
+    toggleBoxSelection(index);
+    editorStore.activeBox = editorStore.selected[0] ?? -1;
+    editorStore.transformStatus = editorStore.selected.includes(index)
+      ? `多選已加入 Crop ${index + 1}，目前共 ${editorStore.selected.length} 個`
+      : `多選已移除 Crop ${index + 1}，目前共 ${editorStore.selected.length} 個`;
+    renderLayers();
+    draw();
+    return true;
+  }
+
+  return false;
+}
+
 function onPointerDown(e) {
   const screenPoint = getCanvasPoint(e);
   const pos = screenToWorld(screenPoint);
@@ -1210,6 +1232,19 @@ function onPointerDown(e) {
     draw();
     return;
   }
+
+  if (editorStore.gridTemplate?.active) {
+    const gridGuideHit = hitGridTemplateGuide(pos);
+    if (gridGuideHit) {
+      startGridGuideDrag(gridGuideHit);
+      renderLayers();
+      draw();
+      return;
+    }
+  }
+
+  // 多選模式下，不先進入群組拖曳/縮放判斷，避免有些 Crop 因為在群組外框內而無法被加入多選。
+  if (handleGlobalMultiSelectHit(pos)) return;
 
   if (editorStore.gridTemplate?.active) {
     if (handleGridTemplatePointerDown(e, pos)) return;
