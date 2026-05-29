@@ -353,6 +353,18 @@ function handleGridTemplatePointerDown(e, pos) {
 
   const cellIndex = getGridCellIndexAt(pos);
   if (cellIndex >= 0) {
+    if (editorStore.mobileMultiSelectMode) {
+      editorStore.deleteButtonBox = -1;
+      toggleBoxSelection(cellIndex);
+      editorStore.activeBox = editorStore.selected[0] ?? -1;
+      editorStore.transformStatus = editorStore.selected.includes(cellIndex)
+        ? `多選已加入 Crop ${cellIndex + 1}`
+        : `多選已移除 Crop ${cellIndex + 1}`;
+      renderLayers();
+      draw();
+      return true;
+    }
+
     selectGridCell(cellIndex);
 
     // 電腦版滑鼠：點住格子內部即可直接拖曳移動該格。
@@ -1235,6 +1247,18 @@ function onPointerDown(e) {
   for (let index = editorStore.boxes.length - 1; index >= 0; index--) {
     const box = editorStore.boxes[index];
     if (box.visible === false || box.locked) continue;
+
+    if (editorStore.mobileMultiSelectMode && pointInBox(pos.x, pos.y, box)) {
+      editorStore.deleteButtonBox = -1;
+      toggleBoxSelection(index);
+      editorStore.activeBox = editorStore.selected[0] ?? -1;
+      editorStore.transformStatus = editorStore.selected.includes(index)
+        ? `多選已加入 Crop ${index + 1}`
+        : `多選已移除 Crop ${index + 1}`;
+      renderLayers();
+      draw();
+      return;
+    }
 
     if (isPointInDeleteButton(pos, box)) {
       deleteBoxAt(index);
